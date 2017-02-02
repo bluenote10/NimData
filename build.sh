@@ -1,21 +1,21 @@
 #!/bin/bash
 
 
-file=src/nimdata.nim
+file=tests/all.nim
 
 fileAbs=`readlink -m $file`
 traceback=false
 
 cd `dirname $0`
 mkdir -p bin
-nim c -o:../bin/test --parallelBuild:1 -d:testNimData -d:release $file
+nim c -o:./bin/tests --parallelBuild:1 -d:testNimData -d:release $file
 
 compiler_exit=$?
 
 echo "Compiler exit: $compiler_exit"
 
 if [ "$compiler_exit" -eq 0 ]; then  # compile success
-  ./bin/test
+  ./bin/tests
   exit $?
 fi
 
