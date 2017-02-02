@@ -5,6 +5,17 @@ import ../src/nimdata
 import ../src/nimdata_utils
 
 
+UnitTestSuite("Schema Parser"):
+  test "Parsing":
+    const schema = [
+      col(IntCol, "columnA"),
+      col(IntCol, "columnB")
+    ]
+    let parser = schemaParser(schema)
+    let result = parser("1;2")
+    check result == (columnA: 1, columnB: 2)
+
+
 UnitTestSuite("CachedDataFrame"):
   test "Construction from seq":
     let data = newPersistedDataFrame[int](@[1, 2, 3])
@@ -22,6 +33,7 @@ UnitTestSuite("CachedDataFrame"):
     let result = data.collect()
     check result.len == 3
     check result == @[1, 2, 3]
+
 
 UnitTestSuite("MappedDataFrame"):
   test "Contstruction":

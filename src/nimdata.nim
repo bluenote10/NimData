@@ -5,8 +5,12 @@ import sequtils
 import future
 import macros
 
-type
-  Iter[T] = object
+import nimdata_schema_parser
+export nimdata_schema_parser.Column
+export nimdata_schema_parser.ColKind
+export nimdata_schema_parser.col
+export nimdata_schema_parser.schema_parser
+
 
 macro debug*(n: varargs[typed]): untyped =
   result = newNimNode(nnkStmtList, n)
