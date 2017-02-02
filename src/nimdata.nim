@@ -42,8 +42,15 @@ type
     orig: DataFrame[T]
     f: proc(x: T): bool
 
+  #FileRowsDataFrame* = ref object of DataFrame[string]
+  #  filename: string
+
+
 proc newPersistedDataFrame*[T](data: seq[T]): DataFrame[T] =
   result = PersistedDataFrame[T](data: data)
+
+#proc newFileRowsDataFrame*(filename: string): DataFrame[string] =
+#  result = FileRowsDataFrame(filename: filename)
 
 # -----------------------------------------------------------------------------
 # Transformations
@@ -64,7 +71,8 @@ iterator toIterBugfix[T](closureIt: iterator(): T): T {.inline.} =
     yield x
 
 method iter*[T](df: DataFrame[T]): (iterator(): T) {.base.} =
-  raise newException(IOError, "unimplemented")
+  echo df.type.name
+  raise newException(IOError, "unimplemented iter")
 
 method iter*[T](df: PersistedDataFrame[T]): (iterator(): T) =
   result = iterator(): T =
@@ -83,7 +91,15 @@ method iter*[T](df: FilteredDataFrame[T]): (iterator(): T) =
     for x in toIterBugfix(it):
       if df.f(x):
         yield x
-
+#[
+method iter*[T](df: FileRowsDataFrame): (iterator(): string) =
+  result = iterator(): string =
+    var f = open(df.filename, bufSize=8000)
+    var res = TaintedString(newStringOfCap(80))
+    while f.readLine(res):
+      yield res
+    close(f)
+]#
 
 # -----------------------------------------------------------------------------
 # Actions
@@ -102,8 +118,23 @@ method collect*[S, T](df: MappedDataFrame[S, T]): seq[T] =
     result.add(df.mapper(x))
   #for x in df.orig.
 
+#[
+method collect*(df: FileRowsDataFrame): seq[string] =
+  result = newSeq[string]()
+  var f = open(df.filename, bufSize=8000)
+  var res = TaintedString(newStringOfCap(80))
+  while f.readLine(res):
+    result.add(res)
+  close(f)
+]#
 
-
+#[
+method collect*[T](df: DataFrame[T]): seq[T] =
+  result = newSeq[T]()
+  let it = df.iter()
+  for x in it():
+    result.add(x)
+]#
 
 
 

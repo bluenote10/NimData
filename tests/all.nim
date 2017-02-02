@@ -64,4 +64,10 @@ UnitTestSuite("MappedDataFrame"):
     check data.map(x => x*2).map(x => x*2).collect() == @[4, 8, 12]
     check data.filter(x => x mod 2 == 1).map(x => x * 100).collect() == @[100, 300]
 
+UnitTestSuite("Type specific"):
+  test "DataFrame[string]":
+    let data = newPersistedDataFrame[string](@["1", "2", "3"])
+    check data.collect() == @["1", "2", "3"]
+    check data.map(x => x & x).collect() == @["11", "22", "33"]
+
 
