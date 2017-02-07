@@ -1,7 +1,7 @@
 #!/bin/bash
 
-file=tests/all.nim
-#file=benchmarks/NimData/basic_tests.nim
+#file=tests/all.nim
+file=benchmarks/NimData/basic_tests.nim
 
 fileAbs=`readlink -m $file`
 traceback=false

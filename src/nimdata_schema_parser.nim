@@ -4,6 +4,7 @@ import strutils
 
 type
   ColKind* = enum
+    StrCol,
     IntCol,
     FloatCol
   Column* = object
@@ -21,6 +22,7 @@ macro schemaParser*(schema: static[openarray[Column]]): untyped =
   for col in schema:
     # TODO: This can probably done using true types + type.getType.name
     let typ = case col.kind
+      of StrCol: "string"
       of IntCol: "int"
       of FloatCol: "float"
     returnType.add(
@@ -47,11 +49,16 @@ macro schemaParser*(schema: static[openarray[Column]]): untyped =
     if `fieldsIdent`.len != `expectedFields`:
       raise newException(IOError, "Unexpected number of fields")
   for i, col in schema.pairs:
-    let parserFunc = case col.kind
-      of IntCol: bindSym("parseInt")
-      of FloatCol: bindSym("parseFloat")
+    let ass_rhs = case col.kind
+      of StrCol:
+        newNimNode(nnkBracketExpr).add(ident("fields"), newIntLitNode(i))
+      of IntCol:
+        let parserFunc = bindSym("parseInt")
+        newCall(parserFunc, newNimNode(nnkBracketExpr).add(ident("fields"), newIntLitNode(i)))
+      of FloatCol:
+        let parserFunc = bindSym("parseInt")
+        newCall(parserFunc, newNimNode(nnkBracketExpr).add(ident("fields"), newIntLitNode(i)))
     let ass_lhs = newDotExpr(ident("result"), ident(col.name))
-    let ass_rhs = newCall(parserFunc, newNimNode(nnkBracketExpr).add(ident("fields"), newIntLitNode(i)))
     body.add(newAssignment(ass_lhs, ass_rhs))
   when defined(checkMacros):
     echo body.treeRepr

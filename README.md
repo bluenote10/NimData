@@ -1,8 +1,10 @@
+# NimData
 
-import ../../src/nimdata
-import future
-import strutils
+Early prototype of a DataFrame API in Nim.
 
+Allows to write code like:
+
+```nimrod
 let input = @[
     "Jon;22",
     "Bart;33",
@@ -24,6 +26,6 @@ let df = DF.fromSeq(input)
            .cache()
            # this call performs all transformations and caches the result in memory.
 
-# echo df.count() # causes runtime error :(
 echo df.collect()
 echo df.map(x => x.age).collect()
+```

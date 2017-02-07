@@ -4,6 +4,7 @@ import strutils
 import sequtils
 import future
 import macros
+import random
 
 import nimdata_schema_parser
 export nimdata_schema_parser.Column
@@ -11,22 +12,6 @@ export nimdata_schema_parser.ColKind
 export nimdata_schema_parser.col
 export nimdata_schema_parser.schema_parser
 
-
-macro debug*(n: varargs[typed]): untyped =
-  result = newNimNode(nnkStmtList, n)
-  for i in 0..n.len-1:
-    add(result, newCall("write", newIdentNode("stdout"), toStrLit(n[i])))
-    add(result, newCall("write", newIdentNode("stdout"), newStrLitNode(": ")))
-    add(result, newCall("write", newIdentNode("stdout"), n[i]))
-    if i != n.len-1:
-      add(result, newCall("write", newIdentNode("stdout"), newStrLitNode(", ")))
-  add(result, newCall("writeLine", newIdentNode("stdout"), newStrLitNode("")))
-
-#[
-macro printExpr(x: untyped): untyped =
-  echo x.toStrLit
-  result = quote do: discard
-]#
 
 type
   DataFrame*[T] = ref object of RootObj
@@ -42,6 +27,8 @@ type
     orig: DataFrame[T]
     f: proc(x: T): bool
 
+  RangeDataFrame*[T] = ref object of DataFrame[T]
+    lo, hi: int
   #[
   FileRowsDataFrame*[T] = ref object of DataFrame[T]
     filename: string
@@ -49,8 +36,20 @@ type
   ]#
 
 
-proc newCachedDataFrame*[T](data: seq[T]): DataFrame[T] =
+type
+  DataFrameContext* = object
+
+let
+  DF* = DataFrameContext()
+
+proc fromSeq*[T](dfc: DataFrameContext, data: seq[T]): DataFrame[T] =
   result = CachedDataFrame[T](data: data)
+
+#[
+# can't add this, because of "invalid declaration order" for `iter`
+proc fromRange*(dfc: DataFrameContext, lo: int, hi: int): DataFrame[int] =
+  result = RangeDataFrame[int](lo: lo, hi: hi)
+]#
 
 #[
 proc newFileRowsDataFrame*(filename: string): DataFrame[string] =
@@ -67,10 +66,15 @@ method map*[T, U](df: DataFrame[T], f: proc(x: T): U): DataFrame[U] {.base.} =
 method filter*[T](df: DataFrame[T], f: proc(x: T): bool): DataFrame[T] {.base.} =
   result = FilteredDataFrame[T](orig: df, f: f)
 
+method sample*[T](df: DataFrame[T], probability: float): DataFrame[T] {.base.} =
+  proc filter(x: T): bool = probability > random(1.0)
+  result = FilteredDataFrame[T](orig: df, f: filter)
+
 # -----------------------------------------------------------------------------
 # Iterators
 # -----------------------------------------------------------------------------
 
+# not sure why I need this -- I actually store the iterator in a variable already
 iterator toIterBugfix[T](closureIt: iterator(): T): T {.inline.} =
   for x in closureIt():
     yield x
@@ -96,6 +100,11 @@ method iter*[T](df: FilteredDataFrame[T]): (iterator(): T) =
     for x in toIterBugfix(it):
       if df.f(x):
         yield x
+
+method iter*[T](df: RangeDataFrame[T]): (iterator(): T) =
+  result = iterator(): T =
+    for i in df.lo .. <df.hi:
+      yield i
 
 #[
 method iter*[T](df: FileRowsDataFrame[T]): (iterator(): string) =
@@ -154,8 +163,49 @@ method count*[T](df: DataFrame[T]): int =
 
 method cache*[T](df: DataFrame[T]): DataFrame[T] =
   let data = df.collect()
-  result = newCachedDataFrame[T](data)
+  result = CachedDataFrame[T](data: data)
 
+
+#[
+# Even without calling any of these methods, I get errors because T can be a string, like:
+#
+# Error: type mismatch: got (float, string)
+# but expected one of:
+# proc `+=`[T: SomeOrdinal | uint | uint64](x: var T; y: T)
+# proc `+=`[T: float | float32 | float64](x: var T; y: T)
+# proc `+=`(t: var Time; ti: TimeInterval)
+#
+# or:
+#
+# Error: type mismatch: got (typedesc[string])
+# but expected one of:
+# proc high[T](x: T): T
+#
+# How can I avoid that?
+
+method mean*[T](df: DataFrame[T]): float =
+  result = 0
+  var count = 0
+  let it = df.iter()
+  for x in it():
+    count += 1
+    result += x
+  result /= count
+
+method min*[T](df: DataFrame[T]): T =
+  result = T.high
+  let it = df.iter()
+  for x in it():
+    if x < result:
+      result = x
+
+method max*[T](df: DataFrame[T]): T =
+  result = T.low
+  let it = df.iter()
+  for x in it():
+    if x > result:
+      result = x
+]#
 
 
 

@@ -1,3 +1,4 @@
 .changes
 bin/*
 nimcache
+*.csv
