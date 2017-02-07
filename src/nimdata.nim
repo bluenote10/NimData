@@ -31,7 +31,7 @@ macro printExpr(x: untyped): untyped =
 type
   DataFrame*[T] = ref object of RootObj
 
-  PersistedDataFrame*[T] = ref object of DataFrame[T]
+  CachedDataFrame*[T] = ref object of DataFrame[T]
     data: seq[T]
 
   MappedDataFrame*[T, U] = ref object of DataFrame[T]
@@ -42,15 +42,20 @@ type
     orig: DataFrame[T]
     f: proc(x: T): bool
 
-  #FileRowsDataFrame* = ref object of DataFrame[string]
-  #  filename: string
+  #[
+  FileRowsDataFrame*[T] = ref object of DataFrame[T]
+    filename: string
+    dummy: T
+  ]#
 
 
-proc newPersistedDataFrame*[T](data: seq[T]): DataFrame[T] =
-  result = PersistedDataFrame[T](data: data)
+proc newCachedDataFrame*[T](data: seq[T]): DataFrame[T] =
+  result = CachedDataFrame[T](data: data)
 
-#proc newFileRowsDataFrame*(filename: string): DataFrame[string] =
-#  result = FileRowsDataFrame(filename: filename)
+#[
+proc newFileRowsDataFrame*(filename: string): DataFrame[string] =
+  result = FileRowsDataFrame[string](filename: filename)
+]#
 
 # -----------------------------------------------------------------------------
 # Transformations
@@ -74,7 +79,7 @@ method iter*[T](df: DataFrame[T]): (iterator(): T) {.base.} =
   echo df.type.name
   raise newException(IOError, "unimplemented iter")
 
-method iter*[T](df: PersistedDataFrame[T]): (iterator(): T) =
+method iter*[T](df: CachedDataFrame[T]): (iterator(): T) =
   result = iterator(): T =
     for x in df.data:
       yield x
@@ -91,8 +96,9 @@ method iter*[T](df: FilteredDataFrame[T]): (iterator(): T) =
     for x in toIterBugfix(it):
       if df.f(x):
         yield x
+
 #[
-method iter*[T](df: FileRowsDataFrame): (iterator(): string) =
+method iter*[T](df: FileRowsDataFrame[T]): (iterator(): string) =
   result = iterator(): string =
     var f = open(df.filename, bufSize=8000)
     var res = TaintedString(newStringOfCap(80))
@@ -105,10 +111,17 @@ method iter*[T](df: FileRowsDataFrame): (iterator(): string) =
 # Actions
 # -----------------------------------------------------------------------------
 
+method collect*[T](df: DataFrame[T]): seq[T] =
+  result = newSeq[T]()
+  let it = df.iter()
+  for x in it():
+    result.add(x)
+
+#[
 method collect*[T](df: DataFrame[T]): seq[T] {.base.} =
   raise newException(IOError, "unimplemented")
 
-method collect*[T](df: PersistedDataFrame[T]): seq[T] =
+method collect*[T](df: CachedDataFrame[T]): seq[T] =
   result = df.data
 
 method collect*[S, T](df: MappedDataFrame[S, T]): seq[T] =
@@ -116,9 +129,14 @@ method collect*[S, T](df: MappedDataFrame[S, T]): seq[T] =
   let it = df.orig.iter()
   for x in it():
     result.add(df.mapper(x))
-  #for x in df.orig.
 
-#[
+method collect*[T](df: FilteredDataFrame[T]): seq[T] =
+  result = newSeq[T]()
+  let it = df.orig.iter()
+  for x in it():
+    if df.f(x):
+      result.add(x)
+
 method collect*(df: FileRowsDataFrame): seq[string] =
   result = newSeq[string]()
   var f = open(df.filename, bufSize=8000)
@@ -128,13 +146,15 @@ method collect*(df: FileRowsDataFrame): seq[string] =
   close(f)
 ]#
 
-#[
-method collect*[T](df: DataFrame[T]): seq[T] =
-  result = newSeq[T]()
+method count*[T](df: DataFrame[T]): int =
+  result = 0
   let it = df.iter()
   for x in it():
-    result.add(x)
-]#
+    result += 1
+
+method cache*[T](df: DataFrame[T]): DataFrame[T] =
+  let data = df.collect()
+  result = newCachedDataFrame[T](data)
 
 
 
