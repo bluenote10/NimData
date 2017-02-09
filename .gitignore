@@ -2,3 +2,4 @@
 bin/*
 nimcache
 *.csv
+/table.html

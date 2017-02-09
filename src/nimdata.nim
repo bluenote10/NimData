@@ -6,12 +6,16 @@ import future
 import macros
 import random
 
+import os
+import browsers
+
 import nimdata_schema_parser
 export nimdata_schema_parser.Column
 export nimdata_schema_parser.ColKind
 export nimdata_schema_parser.col
 export nimdata_schema_parser.schema_parser
 
+import nimdata_html
 
 type
   DataFrame*[T] = ref object of RootObj
@@ -167,7 +171,8 @@ method cache*[T](df: DataFrame[T]): DataFrame[T] =
 
 
 #[
-# Even without calling any of these methods, I get errors because T can be a string, like:
+# Even without calling any of these methods, the compiler thinks T is a string,
+# resulting in errors like:
 #
 # Error: type mismatch: got (float, string)
 # but expected one of:
@@ -206,6 +211,67 @@ method max*[T](df: DataFrame[T]): T =
     if x > result:
       result = x
 ]#
+
+
+proc toCsv*[T: tuple|object](df: DataFrame[T], filename: string, sep: char = ';') =
+  var file = open(filename, fmWrite)
+  defer: file.close()
+
+  var dummy: T
+  var i = 0
+
+  for field, _ in dummy.fieldPairs(): # TODO: solve without dummy instance; report bug: SIGSEGV for dummy.fields()
+    if i > 0:
+      file.write(sep)
+    file.write(field)
+    i += 1
+  file.write("\n")
+
+  let it = df.iter()
+  for x in it():
+    i = 0
+    for field, value in x.fieldPairs():
+      if i > 0:
+        file.write(sep)
+      file.write(value)
+      i += 1
+    file.write("\n")
+
+
+proc toHtml*[T: tuple|object](df: DataFrame[T], filename: string) =
+  var tableStr = ""
+  let it = df.iter()
+
+  tableStr &= "<thead>\n"
+  tableStr &= "<tr>"
+  var dummy: T
+  for field, _ in dummy.fieldPairs(): # TODO: solve without dummy instance; report bug: SIGSEGV for dummy.fields()
+    tableStr &= "<th>"
+    tableStr &= field
+    tableStr &= "</th>"
+  tableStr &= "</tr>\n"
+  tableStr &= "</thead>\n"
+
+  tableStr &= "<body>\n"
+  for x in it():
+    tableStr &= "<tr>"
+    for field, value in x.fieldPairs():
+      tableStr &= "<td>"
+      tableStr &= value
+      tableStr &= "</td>"
+    tableStr &= "</tr>\n"
+  tableStr &= "<tbody>\n"
+
+  var html = htmlTemplate.replace("----table-data----", tableStr)
+  var file = open(filename, fmWrite)
+  file.write(html)
+  file.close()
+
+
+proc show*[T: tuple|object](df: DataFrame[T]) =
+  let filename = getTempDir() / "table.html"
+  df.toHtml(filename)
+  openDefaultBrowser(filename)
 
 
 

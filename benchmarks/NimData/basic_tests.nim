@@ -27,3 +27,7 @@ let df = DF.fromSeq(input)
 # echo df.count() # causes runtime error :(
 echo df.collect()
 echo df.map(x => x.age).collect()
+
+df.toHtml("table.html")
+df.toCsv("table.csv")
+df.show()
