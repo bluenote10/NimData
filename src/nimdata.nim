@@ -170,7 +170,7 @@ method cache*[T](df: DataFrame[T]): DataFrame[T] =
   result = CachedDataFrame[T](data: data)
 
 
-#[
+# [
 # Even without calling any of these methods, the compiler thinks T is a string,
 # resulting in errors like:
 #
@@ -188,29 +188,29 @@ method cache*[T](df: DataFrame[T]): DataFrame[T] =
 #
 # How can I avoid that?
 
-method mean*[T](df: DataFrame[T]): float =
+proc mean*[T](df: DataFrame[T]): float =
   result = 0
   var count = 0
   let it = df.iter()
   for x in it():
     count += 1
-    result += x
-  result /= count
+    result += x.float
+  result /= count.float
 
-method min*[T](df: DataFrame[T]): T =
-  result = T.high
+proc min*[T](df: DataFrame[T]): T =
+  result = high(T)
   let it = df.iter()
   for x in it():
     if x < result:
       result = x
 
-method max*[T](df: DataFrame[T]): T =
-  result = T.low
+proc max*[T](df: DataFrame[T]): T =
+  result = low(T)
   let it = df.iter()
   for x in it():
     if x > result:
       result = x
-]#
+#]#
 
 
 proc toCsv*[T: tuple|object](df: DataFrame[T], filename: string, sep: char = ';') =

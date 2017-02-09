@@ -28,6 +28,10 @@ let df = DF.fromSeq(input)
 echo df.collect()
 echo df.map(x => x.age).collect()
 
+echo df.map(x => x.age).mean()
+echo df.map(x => x.age).min()
+echo df.map(x => x.age).max()
+
 df.toHtml("table.html")
 df.toCsv("table.csv")
 df.show()
