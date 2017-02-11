@@ -2,6 +2,7 @@
 import future
 import strutils
 import math
+import fenv
 
 import nimdata
 import nimdata_utils
@@ -129,8 +130,8 @@ UnitTestSuite("FilteredDataFrame"):
     check data.filter(x => x mod 2 == 1).map(x => x * 100).collect() == @[100, 300]
 
 
-UnitTestSuite("Indexed Operations"):
-  test "Take":
+UnitTestSuite("Indexed Transformations"):
+  test "take":
     let data = DF.fromSeq(@[1, 2, 3]).take(2)
     check data.count() == 2
     check data.collect() == @[1, 2]
@@ -148,7 +149,7 @@ UnitTestSuite("Indexed Operations"):
     check DF.fromSeq(@[1, 2, 3]).take(2).take(2).collect() == @[1, 2]
     check DF.fromSeq(@[1, 2, 3]).take(2).take(2).take(2).collect() == @[1, 2]
 
-  test "Drop":
+  test "drop":
     let data = DF.fromSeq(@[1, 2, 3]).drop(2)
     check data.count() == 1
     check data.collect() == @[3]
@@ -167,15 +168,28 @@ UnitTestSuite("Indexed Operations"):
     check DF.fromSeq(@[1, 2, 3]).drop(1).drop(1).drop(1).collect() == newSeq[int]()
     check DF.fromSeq(@[1, 2, 3]).drop(1).drop(1).drop(1).drop(1).collect() == newSeq[int]()
 
-  test "FilterWithIndex":
+  test "filterWithIndex":
     check DF.fromSeq(@[1, 2, 3]).filterWithIndex((i, x) => i == 1).collect() == @[2]
 
-  test "MapWithIndex":
+  test "mapWithIndex":
     check DF.fromSeq(@[1, 2, 3]).mapWithIndex((i, x) => i == 1).collect() == @[false, true, false]
     check DF.fromSeq(@[1, 2, 3]).mapWithIndex((i, x) => i*x).collect() == @[0, 2, 6]
 
 
-UnitTestSuite("Numerical actions"):
+UnitTestSuite("Reduce/Fold Actions"):
+  test "reduce":
+    check DF.fromSeq(@[1, 2, 3]).reduce((a, b) => a + b) == 6
+    check DF.fromSeq(@[1, 2, 3]).reduce((a, b) => max(a, b)) == 3
+    check DF.fromSeq(@[1, 2, 3]).reduce((a, b) => min(a, b)) == 1
+
+  test "fold":
+    check DF.fromSeq(@[1, 2, 3]).fold(0.0, (a, b) => a + b.float) == 6.0
+    check DF.fromSeq(@[1, 2, 3]).fold(-float.maximumPositiveValue,  (a, b) => max(a, b.float)) == 3.0
+    check DF.fromSeq(@[1, 2, 3]).fold(+float.maximumPositiveValue, (a, b) => min(a, b.float)) == 1.0
+    check DF.fromSeq(@[1, 2, 3]).fold("", (a, b) => a & $b) == "123"
+
+
+UnitTestSuite("Numerical Actions"):
   test "sum":
     check DF.fromSeq(@[1, 2, 3]).sum() == 6
     check DF.fromSeq(@[1, 2, 3]).map(x => x).sum() == 6
@@ -190,11 +204,17 @@ UnitTestSuite("Numerical actions"):
     check DF.fromSeq(@[1, 2, 3]).min() == 1
     check DF.fromSeq(@[1, 2, 3]).map(x => x).min() == 1
     check DF.fromSeq(@[1, 2, 3]).filter(_ => false).min() == high(int)
+    check DF.fromSeq(@[-1, -2, -3]).min() == -3
+    check DF.fromSeq(@[+1.0, +2.0, +3.0]).min() == 1.0
+    check DF.fromSeq(@[-1.0, -2.0, -3.0]).min() == -3.0
 
   test "max":
     check DF.fromSeq(@[1, 2, 3]).max() == 3
     check DF.fromSeq(@[1, 2, 3]).map(x => x).max() == 3
     check DF.fromSeq(@[1, 2, 3]).filter(_ => false).max() == low(int)
+    check DF.fromSeq(@[-1, -2, -3]).max() == -1
+    check DF.fromSeq(@[+1.0, +2.0, +3.0]).max() == 3.0
+    check DF.fromSeq(@[-1.0, -2.0, -3.0]).max() == -1.0
 
 
 UnitTestSuite("Type specific"):
