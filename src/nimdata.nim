@@ -183,26 +183,19 @@ proc cache*[T](df: DataFrame[T]): DataFrame[T] = # TODO: want base method?
   result = CachedDataFrame[T](data: data)
 
 
-# When using methods instead of proces, even without calling any of them,
-# the compiler thinks T is a string, resulting in errors like:
-#
-# Error: type mismatch: got (float, string)
-# but expected one of:
-# proc `+=`[T: SomeOrdinal | uint | uint64](x: var T; y: T)
-# proc `+=`[T: float | float32 | float64](x: var T; y: T)
-# proc `+=`(t: var Time; ti: TimeInterval)
-#
-# or:
-#
-# Error: type mismatch: got (typedesc[string])
-# but expected one of:
-# proc high[T](x: T): T
-#
-# How can I avoid that?
+# -----------------------------------------------------------------------------
+# Actions (numerical)
+# -----------------------------------------------------------------------------
+
+proc sum*[T](df: DataFrame[T]): T =
+  ## Computes the sum of a data frame of numerical type ``T``.
+  let it = df.iter()
+  for x in it():
+    result += x
 
 proc mean*[T](df: DataFrame[T]): float =
   ## Computes the mean of a data frame of numerical type ``T``.
-  result = 0
+  result = 0f
   var count = 0
   let it = df.iter()
   for x in it():
@@ -226,6 +219,10 @@ proc max*[T](df: DataFrame[T]): T =
     if x > result:
       result = x
 
+
+# -----------------------------------------------------------------------------
+# Actions (IO)
+# -----------------------------------------------------------------------------
 
 proc toCsv*[T: tuple|object](df: DataFrame[T], filename: string, sep: char = ';') =
   ## Store the data frame in a CSV

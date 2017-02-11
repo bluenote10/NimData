@@ -23,7 +23,7 @@ proc example01() =
              .filter(person => person.age > 10)
              .filter(person => person.name.startsWith("B"))
              .sample(probability=1.0)
-             # up to this point nothing is happened, transformations are lazy.
+             # up to this point nothing has happened, transformations are lazy.
              .cache()
              # this call performs all transformations and caches the result in memory.
 

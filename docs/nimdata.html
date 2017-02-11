@@ -1267,6 +1267,8 @@ function main() {
     title="count[T](df: DataFrame[T]): int"><wbr />count<span class="attachedType" style="visibility:hidden">DataFrame</span></a></li>
   <li><a class="reference" href="#cache,DataFrame[T]"
     title="cache[T](df: DataFrame[T]): DataFrame[T]"><wbr />cache<span class="attachedType" style="visibility:hidden">DataFrame</span></a></li>
+  <li><a class="reference" href="#sum,DataFrame[T]"
+    title="sum[T](df: DataFrame[T]): T"><wbr />sum<span class="attachedType" style="visibility:hidden">DataFrame</span></a></li>
   <li><a class="reference" href="#mean,DataFrame[T]"
     title="mean[T](df: DataFrame[T]): float"><wbr />mean<span class="attachedType" style="visibility:hidden">DataFrame</span></a></li>
   <li><a class="reference" href="#min,DataFrame[T]"
@@ -1438,9 +1440,9 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata.nim#L303"
+href="/tree/master/src/nimdata.nim#L300"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata.nim#L303" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata.nim#L300" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 
@@ -1489,31 +1491,40 @@ class="link-seesrc" target="_blank">Source</a>
 <a href="/edit/devel/src/nimdata.nim#L175" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
+<dt id="sum"><a name="sum,DataFrame[T]"></a><pre><span class="Keyword">proc</span> <span class="Identifier">sum</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">df</span><span class="Other">:</span> <span class="Identifier">DataFrame</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">T</span></pre></dt>
+<dd>
+Computes the sum of a data frame of numerical type <tt class="docutils literal"><span class="pre">T</span></tt>.
+&nbsp;&nbsp;<a
+href="/tree/master/src/nimdata.nim#L190"
+class="link-seesrc" target="_blank">Source</a>
+<a href="/edit/devel/src/nimdata.nim#L190" class="link-seesrc" target="_blank" >Edit</a>
+
+</dd>
 <dt id="mean"><a name="mean,DataFrame[T]"></a><pre><span class="Keyword">proc</span> <span class="Identifier">mean</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">df</span><span class="Other">:</span> <span class="Identifier">DataFrame</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">float</span></pre></dt>
 <dd>
 Computes the mean of a data frame of numerical type <tt class="docutils literal"><span class="pre">T</span></tt>.
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata.nim#L203"
+href="/tree/master/src/nimdata.nim#L196"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata.nim#L203" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata.nim#L196" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <dt id="min"><a name="min,DataFrame[T]"></a><pre><span class="Keyword">proc</span> <span class="Identifier">min</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">df</span><span class="Other">:</span> <span class="Identifier">DataFrame</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">T</span></pre></dt>
 <dd>
 Computes the minimum of a data frame of numerical type <tt class="docutils literal"><span class="pre">T</span></tt>.
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata.nim#L213"
+href="/tree/master/src/nimdata.nim#L206"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata.nim#L213" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata.nim#L206" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <dt id="max"><a name="max,DataFrame[T]"></a><pre><span class="Keyword">proc</span> <span class="Identifier">max</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">df</span><span class="Other">:</span> <span class="Identifier">DataFrame</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">T</span></pre></dt>
 <dd>
 Computes the maximum of a data frame of numerical type <tt class="docutils literal"><span class="pre">T</span></tt>.
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata.nim#L221"
+href="/tree/master/src/nimdata.nim#L214"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata.nim#L221" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata.nim#L214" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <dt id="toCsv"><a name="toCsv,DataFrame[T],string,char"></a><pre><span class="Keyword">proc</span> <span class="Identifier">toCsv</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">:</span> <span class="Keyword">tuple</span> <span class="Operator">|</span>
@@ -1521,9 +1532,9 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 Store the data frame in a CSV
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata.nim#L230"
+href="/tree/master/src/nimdata.nim#L227"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata.nim#L230" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata.nim#L227" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <dt id="toHtml"><a name="toHtml,DataFrame[T],string"></a><pre><span class="Keyword">proc</span> <span class="Identifier">toHtml</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">:</span> <span class="Keyword">tuple</span> <span class="Operator">|</span>
@@ -1531,9 +1542,9 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 Store the data frame in an HTML providing a simple table view. The current implementation uses simple static HTML, so make sure that your data frame is filtered down to a reasonable size.
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata.nim#L256"
+href="/tree/master/src/nimdata.nim#L253"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata.nim#L256" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata.nim#L253" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <dt id="openInBrowser"><a name="openInBrowser,DataFrame[T]"></a><pre><span class="Keyword">proc</span> <span class="Identifier">openInBrowser</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">:</span> <span class="Keyword">tuple</span> <span class="Operator">|</span>
@@ -1541,9 +1552,9 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 Opens a table view of the data frame in the default browser.
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata.nim#L290"
+href="/tree/master/src/nimdata.nim#L287"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata.nim#L290" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata.nim#L287" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <dt id="fromFile"><a name="fromFile,DataFrameContext,string,bool"></a><pre><span class="Keyword">proc</span> <span class="Identifier">fromFile</span><span class="Other">(</span><span class="Identifier">dfc</span><span class="Other">:</span> <span class="Identifier">DataFrameContext</span><span class="Other">;</span> <span class="Identifier">filename</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">;</span> <span class="Identifier">hasHeader</span><span class="Other">:</span> <span class="Identifier">bool</span> <span class="Other">=</span> <span class="Identifier">true</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">DataFrame</span><span class="Other">[</span>
@@ -1551,9 +1562,9 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 Constructs a data frame from a file.
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata.nim#L307"
+href="/tree/master/src/nimdata.nim#L304"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata.nim#L307" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata.nim#L304" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 
@@ -1710,9 +1721,9 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata.nim#L314"
+href="/tree/master/src/nimdata.nim#L311"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata.nim#L314" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata.nim#L311" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 
@@ -1725,7 +1736,7 @@ class="link-seesrc" target="_blank">Source</a>
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br/>
-        <small>Made with Nim. Generated: 2017-02-11 12:41:59 UTC</small>
+        <small>Made with Nim. Generated: 2017-02-11 16:32:41 UTC</small>
       </div>
     </div>
   </div>

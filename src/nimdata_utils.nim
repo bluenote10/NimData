@@ -21,6 +21,13 @@ macro debug*(n: varargs[typed]): untyped =
   # add new line
   add(result, newCall("writeLine", newIdentNode("stdout"), newStrLitNode("")))
 
+macro debugExpr*(arg: untyped): untyped =
+  let argCallsite = callsite()[1]
+  result = newNimNode(nnkStmtList)
+  result.add(newCall("write", newIdentNode("stdout"), argCallsite.toStrLit))
+  result.add(newCall("write", newIdentNode("stdout"), newStrLitNode(" => ")))
+  result.add(newCall("writeLine", newIdentNode("stdout"), arg))
+
 
 proc seqAddr*[T](s: var seq[T]): ptr T =
   if s.len > 0:
@@ -37,3 +44,4 @@ template UnitTestSuite*(name: string, code: untyped): untyped =
 template getSourcePath*(): string =
   let path = instantiationInfo(fullPaths=true)
   path.filename
+

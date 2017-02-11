@@ -1,6 +1,7 @@
 
 import future
 import strutils
+import math
 
 import nimdata
 import nimdata_utils
@@ -172,6 +173,28 @@ UnitTestSuite("Indexed Operations"):
   test "MapWithIndex":
     check DF.fromSeq(@[1, 2, 3]).mapWithIndex((i, x) => i == 1).collect() == @[false, true, false]
     check DF.fromSeq(@[1, 2, 3]).mapWithIndex((i, x) => i*x).collect() == @[0, 2, 6]
+
+
+UnitTestSuite("Numerical actions"):
+  test "sum":
+    check DF.fromSeq(@[1, 2, 3]).sum() == 6
+    check DF.fromSeq(@[1, 2, 3]).map(x => x).sum() == 6
+    check DF.fromSeq(@[1, 2, 3]).filter(_ => false).sum() == 0
+
+  test "mean":
+    check DF.fromSeq(@[1, 2, 3]).mean() == 2
+    check DF.fromSeq(@[1, 2, 3]).map(x => x).mean() == 2
+    check DF.fromSeq(@[1, 2, 3]).filter(_ => false).mean().classify() == fcNaN
+
+  test "min":
+    check DF.fromSeq(@[1, 2, 3]).min() == 1
+    check DF.fromSeq(@[1, 2, 3]).map(x => x).min() == 1
+    check DF.fromSeq(@[1, 2, 3]).filter(_ => false).min() == high(int)
+
+  test "max":
+    check DF.fromSeq(@[1, 2, 3]).max() == 3
+    check DF.fromSeq(@[1, 2, 3]).map(x => x).max() == 3
+    check DF.fromSeq(@[1, 2, 3]).filter(_ => false).max() == low(int)
 
 
 UnitTestSuite("Type specific"):

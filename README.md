@@ -1,6 +1,12 @@
 # NimData
 
-Early prototype of a DataFrame API in Nim.
+Prototype of a DataFrame API in Nim, enabling fast out-of-core data processing.
+
+NimData is inspired by frameworks like Pandas/Spark/Flink/Thrill,
+and sits between the Pandas and the Spark/Flink/Thrill side.
+Similar to Pandas, NimData is currently non-distributed,
+but shares the type-safe, lazy API of Spark/Flink/Thrill.
+Thanks to Nim, it enables elegant out-of-core processing at native speed.
 
 Allows to write code like:
 
@@ -35,3 +41,14 @@ echo df.map(x => x.age).collect()
 ## Documentation
 
 See [module docs](https://bluenote10.github.io/NimData/nimdata.html).
+
+## Next steps
+
+- More transformation/actions (reduction, flatMap, groupBy, join, sort, Union, window)
+- More data formats
+- Plotting (maybe in the form of Bokeh bindings)
+- REPL or Jupyter kernel
+
+## License
+
+This project is licensed under the terms of the MIT license.
