@@ -31,3 +31,7 @@ echo df.collect()
 echo df.map(x => x.age).collect()
 # => @[33, 49]
 ```
+
+## Documentation
+
+See [module docs](https://bluenote10.github.io/NimData/nimdata.html).
