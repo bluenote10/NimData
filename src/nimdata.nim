@@ -25,7 +25,7 @@ type
 
   MappedDataFrame*[T, U] = ref object of DataFrame[T]
     orig: DataFrame[T]
-    mapper: proc(x: T): U
+    f: proc(x: T): U
 
   FilteredDataFrame*[T] = ref object of DataFrame[T]
     orig: DataFrame[T]
@@ -33,12 +33,6 @@ type
 
   RangeDataFrame*[T] = ref object of DataFrame[T]
     lo, hi: int
-  #[
-  FileRowsDataFrame*[T] = ref object of DataFrame[T]
-    filename: string
-    dummy: T
-  ]#
-
 
 type
   DataFrameContext* = object
@@ -55,17 +49,13 @@ proc fromRange*(dfc: DataFrameContext, lo: int, hi: int): DataFrame[int] =
   result = RangeDataFrame[int](lo: lo, hi: hi)
 ]#
 
-#[
-proc newFileRowsDataFrame*(filename: string): DataFrame[string] =
-  result = FileRowsDataFrame[string](filename: filename)
-]#
 
 # -----------------------------------------------------------------------------
 # Transformations
 # -----------------------------------------------------------------------------
 
 method map*[T, U](df: DataFrame[T], f: proc(x: T): U): DataFrame[U] {.base.} =
-  result = MappedDataFrame[T, U](orig: df, mapper: f)
+  result = MappedDataFrame[T, U](orig: df, f: f)
 
 method filter*[T](df: DataFrame[T], f: proc(x: T): bool): DataFrame[T] {.base.} =
   result = FilteredDataFrame[T](orig: df, f: f)
@@ -96,7 +86,7 @@ method iter*[T, U](df: MappedDataFrame[T, U]): (iterator(): U) =
   result = iterator(): U =
     var it = df.orig.iter()
     for x in toIterBugfix(it):
-      yield df.mapper(x)
+      yield df.f(x)
 
 method iter*[T](df: FilteredDataFrame[T]): (iterator(): T) =
   result = iterator(): T =
@@ -110,69 +100,35 @@ method iter*[T](df: RangeDataFrame[T]): (iterator(): T) =
     for i in df.lo .. <df.hi:
       yield i
 
-#[
-method iter*[T](df: FileRowsDataFrame[T]): (iterator(): string) =
-  result = iterator(): string =
-    var f = open(df.filename, bufSize=8000)
-    var res = TaintedString(newStringOfCap(80))
-    while f.readLine(res):
-      yield res
-    close(f)
-]#
-
 # -----------------------------------------------------------------------------
 # Actions
 # -----------------------------------------------------------------------------
 
-method collect*[T](df: DataFrame[T]): seq[T] =
+method collect*[T](df: DataFrame[T]): seq[T] {.base.} =
   result = newSeq[T]()
   let it = df.iter()
   for x in it():
     result.add(x)
 
-#[
-method collect*[T](df: DataFrame[T]): seq[T] {.base.} =
-  raise newException(IOError, "unimplemented")
-
 method collect*[T](df: CachedDataFrame[T]): seq[T] =
   result = df.data
 
-method collect*[S, T](df: MappedDataFrame[S, T]): seq[T] =
-  result = newSeq[T]()
-  let it = df.orig.iter()
-  for x in it():
-    result.add(df.mapper(x))
 
-method collect*[T](df: FilteredDataFrame[T]): seq[T] =
-  result = newSeq[T]()
-  let it = df.orig.iter()
-  for x in it():
-    if df.f(x):
-      result.add(x)
-
-method collect*(df: FileRowsDataFrame): seq[string] =
-  result = newSeq[string]()
-  var f = open(df.filename, bufSize=8000)
-  var res = TaintedString(newStringOfCap(80))
-  while f.readLine(res):
-    result.add(res)
-  close(f)
-]#
-
-method count*[T](df: DataFrame[T]): int =
+proc count*[T](df: DataFrame[T]): int = # TODO: want base method?
   result = 0
   let it = df.iter()
   for x in it():
     result += 1
 
-method cache*[T](df: DataFrame[T]): DataFrame[T] =
+
+proc cache*[T](df: DataFrame[T]): DataFrame[T] = # TODO: want base method?
   let data = df.collect()
   result = CachedDataFrame[T](data: data)
 
 
 # [
-# Even without calling any of these methods, the compiler thinks T is a string,
-# resulting in errors like:
+# When using methods instead of proces, even without calling any of them,
+# the compiler thinks T is a string, resulting in errors like:
 #
 # Error: type mismatch: got (float, string)
 # but expected one of:
@@ -268,10 +224,34 @@ proc toHtml*[T: tuple|object](df: DataFrame[T], filename: string) =
   file.close()
 
 
-proc show*[T: tuple|object](df: DataFrame[T]) =
+proc openInBrowser*[T: tuple|object](df: DataFrame[T]) =
   let filename = getTempDir() / "table.html"
   df.toHtml(filename)
   openDefaultBrowser(filename)
 
 
+# -----------------------------------------------------------------------------
+# Specialized DataFrame types
+# (definition down here because of https://github.com/nim-lang/Nim/issues/5325)
+# -----------------------------------------------------------------------------
 
+type
+  FileRowsDataFrame* = ref object of DataFrame[string]
+    filename: string
+    hasHeader: bool
+
+proc fromFile*(dfc: DataFrameContext, filename: string, hasHeader: bool = true): DataFrame[string] =
+  result = FileRowsDataFrame(
+    filename: filename,
+    hasHeader: hasHeader
+  )
+
+method iter*(df: FileRowsDataFrame): (iterator(): string) =
+  result = iterator(): string =
+    var f = open(df.filename, bufSize=8000)
+    var res = TaintedString(newStringOfCap(80))
+    if df.hasHeader:
+      discard f.readLine(res)
+    while f.readLine(res):
+      yield res
+    close(f)

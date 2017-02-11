@@ -19,7 +19,7 @@ UnitTestSuite("Schema Parser"):
 UnitTestSuite("CachedDataFrame"):
   test "Construction from seq":
     let data = DF.fromSeq(@[1, 2, 3])
-    # check data.count() == 3  # TODO: this fails and also lets other tests fail?!
+    check data.count() == 3  # TODO: this fails and also lets other tests fail?!
 
   test "Iteration":
     let data = DF.fromSeq(@[1, 2, 3])
