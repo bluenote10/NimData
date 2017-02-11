@@ -39,15 +39,14 @@ type
 
 let
   DF* = DataFrameContext()
+    ## Currently this constant is purely used for scoping,
+    ## allowing to write expressions like ``DF.fromFile(...)``
+    ## or ``DF.fromSeq(...)``. Eventually this might be used
+    ## to store general context configuration.
 
 proc fromSeq*[T](dfc: DataFrameContext, data: seq[T]): DataFrame[T] =
+  ## Constructs a data frame from a sequence.
   result = CachedDataFrame[T](data: data)
-
-#[
-# can't add this, because of "invalid declaration order" for `iter`
-proc fromRange*(dfc: DataFrameContext, lo: int, hi: int): DataFrame[int] =
-  result = RangeDataFrame[int](lo: lo, hi: hi)
-]#
 
 
 # -----------------------------------------------------------------------------
@@ -55,12 +54,17 @@ proc fromRange*(dfc: DataFrameContext, lo: int, hi: int): DataFrame[int] =
 # -----------------------------------------------------------------------------
 
 method map*[T, U](df: DataFrame[T], f: proc(x: T): U): DataFrame[U] {.base.} =
+  ## Transforms a ``DataFrame[T]`` into a ``DataFrame[U]`` by applying a
+  ## mapping function ``f``.
   result = MappedDataFrame[T, U](orig: df, f: f)
 
 method filter*[T](df: DataFrame[T], f: proc(x: T): bool): DataFrame[T] {.base.} =
+  ## Filters a data frame by applying a filter function ``f``.
   result = FilteredDataFrame[T](orig: df, f: f)
 
 method sample*[T](df: DataFrame[T], probability: float): DataFrame[T] {.base.} =
+  ## Filters a data frame by applying Bernoulli sampling with the specified
+  ## sampling ``probability``.
   proc filter(x: T): bool = probability > random(1.0)
   result = FilteredDataFrame[T](orig: df, f: filter)
 
@@ -105,16 +109,19 @@ method iter*[T](df: RangeDataFrame[T]): (iterator(): T) =
 # -----------------------------------------------------------------------------
 
 method collect*[T](df: DataFrame[T]): seq[T] {.base.} =
+  ## Collects the content of a ``DataFrame[T]`` and returns it as ``seq[T]``.
   result = newSeq[T]()
   let it = df.iter()
   for x in it():
     result.add(x)
 
 method collect*[T](df: CachedDataFrame[T]): seq[T] =
+  ## Specialized implementation
   result = df.data
 
 
 proc count*[T](df: DataFrame[T]): int = # TODO: want base method?
+  ## Iterates over a data frame, and returns its length
   result = 0
   let it = df.iter()
   for x in it():
@@ -122,11 +129,16 @@ proc count*[T](df: DataFrame[T]): int = # TODO: want base method?
 
 
 proc cache*[T](df: DataFrame[T]): DataFrame[T] = # TODO: want base method?
+  ## Executes all chained operations on a data frame and returns
+  ## a new data frame which is cached in memory. This will speed
+  ## up subsequent operations on the data frame, and is useful
+  ## when you have to perform multiple operation on the same
+  ## data. However, make sure that you have enough memory to
+  ## cache the input data.
   let data = df.collect()
   result = CachedDataFrame[T](data: data)
 
 
-# [
 # When using methods instead of proces, even without calling any of them,
 # the compiler thinks T is a string, resulting in errors like:
 #
@@ -145,6 +157,7 @@ proc cache*[T](df: DataFrame[T]): DataFrame[T] = # TODO: want base method?
 # How can I avoid that?
 
 proc mean*[T](df: DataFrame[T]): float =
+  ## Computes the mean of a data frame of numerical type ``T``.
   result = 0
   var count = 0
   let it = df.iter()
@@ -154,6 +167,7 @@ proc mean*[T](df: DataFrame[T]): float =
   result /= count.float
 
 proc min*[T](df: DataFrame[T]): T =
+  ## Computes the minimum of a data frame of numerical type ``T``.
   result = high(T)
   let it = df.iter()
   for x in it():
@@ -161,15 +175,16 @@ proc min*[T](df: DataFrame[T]): T =
       result = x
 
 proc max*[T](df: DataFrame[T]): T =
+  ## Computes the maximum of a data frame of numerical type ``T``.
   result = low(T)
   let it = df.iter()
   for x in it():
     if x > result:
       result = x
-#]#
 
 
 proc toCsv*[T: tuple|object](df: DataFrame[T], filename: string, sep: char = ';') =
+  ## Store the data frame in a CSV
   var file = open(filename, fmWrite)
   defer: file.close()
 
@@ -195,6 +210,10 @@ proc toCsv*[T: tuple|object](df: DataFrame[T], filename: string, sep: char = ';'
 
 
 proc toHtml*[T: tuple|object](df: DataFrame[T], filename: string) =
+  ## Store the data frame in an HTML providing a simple table view.
+  ## The current implementation uses simple static HTML, so make
+  ## sure that your data frame is filtered down to a reasonable
+  ## size.
   var tableStr = ""
   let it = df.iter()
 
@@ -225,6 +244,7 @@ proc toHtml*[T: tuple|object](df: DataFrame[T], filename: string) =
 
 
 proc openInBrowser*[T: tuple|object](df: DataFrame[T]) =
+  ## Opens a table view of the data frame in the default browser.
   let filename = getTempDir() / "table.html"
   df.toHtml(filename)
   openDefaultBrowser(filename)
@@ -241,6 +261,7 @@ type
     hasHeader: bool
 
 proc fromFile*(dfc: DataFrameContext, filename: string, hasHeader: bool = true): DataFrame[string] =
+  ## Constructs a data frame from a file.
   result = FileRowsDataFrame(
     filename: filename,
     hasHeader: hasHeader
