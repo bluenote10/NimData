@@ -5,7 +5,6 @@ import sequtils
 import future
 import macros
 import random
-import fenv
 
 import os
 import browsers
@@ -229,7 +228,7 @@ proc min*[T](df: DataFrame[T]): T =
   when compiles(high(T)):
     result = high(T)
   else:
-    result = +T.maximumPositiveValue
+    result = +(Inf.T) # for floats
   let it = df.iter()
   for x in it():
     if x < result:
@@ -240,7 +239,7 @@ proc max*[T](df: DataFrame[T]): T =
   when compiles(low(T)):
     result = low(T) # for ordinal types
   else:
-    result = -T.maximumPositiveValue # for floats
+    result = -(Inf.T) # for floats
   let it = df.iter()
   for x in it():
     if x > result:

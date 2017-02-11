@@ -2,7 +2,6 @@
 import future
 import strutils
 import math
-import fenv
 
 import nimdata
 import nimdata_utils
@@ -184,8 +183,8 @@ UnitTestSuite("Reduce/Fold Actions"):
 
   test "fold":
     check DF.fromSeq(@[1, 2, 3]).fold(0.0, (a, b) => a + b.float) == 6.0
-    check DF.fromSeq(@[1, 2, 3]).fold(-float.maximumPositiveValue,  (a, b) => max(a, b.float)) == 3.0
-    check DF.fromSeq(@[1, 2, 3]).fold(+float.maximumPositiveValue, (a, b) => min(a, b.float)) == 1.0
+    check DF.fromSeq(@[1, 2, 3]).fold(-Inf, (a, b) => max(a, b.float)) == 3.0
+    check DF.fromSeq(@[1, 2, 3]).fold(+Inf, (a, b) => min(a, b.float)) == 1.0
     check DF.fromSeq(@[1, 2, 3]).fold("", (a, b) => a & $b) == "123"
 
 
