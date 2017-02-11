@@ -24,12 +24,20 @@ type
     data: seq[T]
 
   MappedDataFrame*[T, U] = ref object of DataFrame[T]
-    orig: DataFrame[T]
-    f: proc(x: T): U
+    orig: DataFrame[U]
+    f: proc(x: U): T
+
+  MappedIndexDataFrame*[T, U] = ref object of DataFrame[T]
+    orig: DataFrame[U]
+    f: proc(i: int, x: U): T
 
   FilteredDataFrame*[T] = ref object of DataFrame[T]
     orig: DataFrame[T]
     f: proc(x: T): bool
+
+  FilteredIndexDataFrame*[T] = ref object of DataFrame[T]
+    orig: DataFrame[T]
+    f: proc(i: int, x: T): bool
 
   RangeDataFrame*[T] = ref object of DataFrame[T]
     lo, hi: int
@@ -53,14 +61,33 @@ proc fromSeq*[T](dfc: DataFrameContext, data: seq[T]): DataFrame[T] =
 # Transformations
 # -----------------------------------------------------------------------------
 
-method map*[T, U](df: DataFrame[T], f: proc(x: T): U): DataFrame[U] {.base.} =
+method map*[T, U](df: DataFrame[U], f: proc(x: U): T): DataFrame[T] {.base.} =
   ## Transforms a ``DataFrame[T]`` into a ``DataFrame[U]`` by applying a
   ## mapping function ``f``.
   result = MappedDataFrame[T, U](orig: df, f: f)
 
+method mapWithIndex*[T, U](df: DataFrame[U], f: proc(i: int, x: U): T): DataFrame[T] {.base.} =
+  ## Transforms a ``DataFrame[T]`` into a ``DataFrame[U]`` by applying a
+  ## mapping function ``f``.
+  result = MappedIndexDataFrame[T, U](orig: df, f: f)
+
 method filter*[T](df: DataFrame[T], f: proc(x: T): bool): DataFrame[T] {.base.} =
   ## Filters a data frame by applying a filter function ``f``.
   result = FilteredDataFrame[T](orig: df, f: f)
+
+method filterWithIndex*[T](df: DataFrame[T], f: proc(i: int, x: T): bool): DataFrame[T] {.base.} =
+  ## Filters a data frame by applying a filter function ``f``.
+  result = FilteredIndexDataFrame[T](orig: df, f: f)
+
+method take*[T](df: DataFrame[T], n: int): DataFrame[T] {.base.} =
+  ## Selects the first `n` rows of a data frame.
+  proc filter(i: int, x: T): bool = i < n
+  result = FilteredIndexDataFrame[T](orig: df, f: filter)
+
+method drop*[T](df: DataFrame[T], n: int): DataFrame[T] {.base.} =
+  ## Discards the first `n` rows of a data frame.
+  proc filter(i: int, x: T): bool = i >= n
+  result = FilteredIndexDataFrame[T](orig: df, f: filter)
 
 method sample*[T](df: DataFrame[T], probability: float): DataFrame[T] {.base.} =
   ## Filters a data frame by applying Bernoulli sampling with the specified
@@ -92,12 +119,29 @@ method iter*[T, U](df: MappedDataFrame[T, U]): (iterator(): U) =
     for x in toIterBugfix(it):
       yield df.f(x)
 
+method iter*[T, U](df: MappedIndexDataFrame[T, U]): (iterator(): U) =
+  result = iterator(): U =
+    var i = 0
+    var it = df.orig.iter()
+    for x in toIterBugfix(it):
+      yield df.f(i, x)
+      i += 1
+
 method iter*[T](df: FilteredDataFrame[T]): (iterator(): T) =
   result = iterator(): T =
     var it = df.orig.iter()
     for x in toIterBugfix(it):
       if df.f(x):
         yield x
+
+method iter*[T](df: FilteredIndexDataFrame[T]): (iterator(): T) =
+  result = iterator(): T =
+    var i = 0
+    var it = df.orig.iter()
+    for x in toIterBugfix(it):
+      if df.f(i, x):
+        yield x
+      i += 1
 
 method iter*[T](df: RangeDataFrame[T]): (iterator(): T) =
   result = iterator(): T =
