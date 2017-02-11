@@ -129,6 +129,17 @@ UnitTestSuite("FilteredDataFrame"):
     check data.filter(x => x mod 2 == 1).map(x => x * 100).collect() == @[100, 300]
 
 
+UnitTestSuite("Non-generic DataFrames"):
+  test "RangeDataFrame":
+    check DF.fromRange(3).collect() == @[0, 1, 2]
+    check DF.fromRange(3).map(x => x+1).collect() == @[1, 2, 3]
+    check DF.fromRange(3).filter(x => x > 0).collect() == @[1, 2]
+    check DF.fromRange(10).take(3).collect() == @[0, 1, 2]
+    check DF.fromRange(5, 8).collect() == @[5, 6, 7]
+    check DF.fromRange(-3, -1).collect() == @[-3, -2]
+    check DF.fromRange(+3, -3).collect() == newSeq[int]()
+
+
 UnitTestSuite("Indexed Transformations"):
   test "take":
     let data = DF.fromSeq(@[1, 2, 3]).take(2)
@@ -221,5 +232,6 @@ UnitTestSuite("Type specific"):
     let data = DF.fromSeq(@["1", "2", "3"])
     check data.collect() == @["1", "2", "3"]
     check data.map(x => x & x).collect() == @["11", "22", "33"]
+
 
 

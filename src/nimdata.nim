@@ -39,24 +39,6 @@ type
     orig: DataFrame[T]
     f: proc(i: int, x: T): bool
 
-  RangeDataFrame*[T] = ref object of DataFrame[T]
-    lo, hi: int
-
-type
-  DataFrameContext* = object
-
-let
-  DF* = DataFrameContext()
-    ## Currently this constant is purely used for scoping,
-    ## allowing to write expressions like ``DF.fromFile(...)``
-    ## or ``DF.fromSeq(...)``. Eventually this might be used
-    ## to store general context configuration.
-
-proc fromSeq*[T](dfc: DataFrameContext, data: seq[T]): DataFrame[T] =
-  ## Constructs a data frame from a sequence.
-  result = CachedDataFrame[T](data: data)
-
-
 # -----------------------------------------------------------------------------
 # Transformations
 # -----------------------------------------------------------------------------
@@ -143,11 +125,6 @@ method iter*[T](df: FilteredIndexDataFrame[T]): (iterator(): T) =
         yield x
       i += 1
 
-method iter*[T](df: RangeDataFrame[T]): (iterator(): T) =
-  result = iterator(): T =
-    for i in df.lo .. <df.hi:
-      yield i
-
 # -----------------------------------------------------------------------------
 # Actions
 # -----------------------------------------------------------------------------
@@ -200,9 +177,6 @@ method collect*[T](df: CachedDataFrame[T]): seq[T] =
   ## Specialized implementation
   result = df.data
 
-
-
-
 # -----------------------------------------------------------------------------
 # Actions (numerical)
 # -----------------------------------------------------------------------------
@@ -244,7 +218,6 @@ proc max*[T](df: DataFrame[T]): T =
   for x in it():
     if x > result:
       result = x
-
 
 # -----------------------------------------------------------------------------
 # Actions (IO)
@@ -323,12 +296,56 @@ proc openInBrowser*[T: tuple|object](df: DataFrame[T]) =
 # -----------------------------------------------------------------------------
 
 type
+  DataFrameContext* = object
+
+let
+  DF* = DataFrameContext()
+    ## Currently this constant is purely used for scoping,
+    ## allowing to write expressions like ``DF.fromFile(...)``
+    ## or ``DF.fromSeq(...)``. Eventually this might be used
+    ## to store general context configuration.
+
+proc fromSeq*[T](dfc: DataFrameContext, data: seq[T]): DataFrame[T] =
+  ## Constructs a data frame from a sequence.
+  result = CachedDataFrame[T](data: data)
+
+
+type
+  RangeDataFrame* = ref object of DataFrame[int]
+    indexFrom, indexUpto: int
+
+proc fromRange*(dfc: DataFrameContext, indexFrom: int, indexUpto: int): DataFrame[int] =
+  ## Constructs a ``DataFrame[int]`` which iterates over the interval
+  ## ``[indexFrom, indexUpto)``, i.e.,
+  ## from ``indexFrom`` (inclusive) up to ``indexUpto`` (exclusive).
+  result = RangeDataFrame(
+    indexFrom: indexFrom,
+    indexUpto: indexUpto
+  )
+
+proc fromRange*(dfc: DataFrameContext, indexUpto: int): DataFrame[int] =
+  ## Constructs a ``DataFrame[int]`` which iterates over the interval
+  ## ``[0, indexUpto)``, i.e.,
+  ## from 0 (inclusive) up to ``indexUpto`` (exclusive).
+  result = RangeDataFrame(
+    indexFrom: 0,
+    indexUpto: indexUpto
+  )
+
+method iter*(df: RangeDataFrame): (iterator(): int) =
+  result = iterator(): int =
+    for i in df.indexFrom .. <df.indexUpto:
+      yield i
+
+
+type
   FileRowsDataFrame* = ref object of DataFrame[string]
     filename: string
     hasHeader: bool
 
 proc fromFile*(dfc: DataFrameContext, filename: string, hasHeader: bool = true): DataFrame[string] =
-  ## Constructs a data frame from a file.
+  ## Constructs a data frame from a text file, iterating
+  ## the file line by line.
   result = FileRowsDataFrame(
     filename: filename,
     hasHeader: hasHeader
