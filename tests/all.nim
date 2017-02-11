@@ -139,6 +139,18 @@ UnitTestSuite("Non-generic DataFrames"):
     check DF.fromRange(-3, -1).collect() == @[-3, -2]
     check DF.fromRange(+3, -3).collect() == newSeq[int]()
 
+  test "FileRowsDataFrame":
+    check DF.fromFile("tests/data/mini.csv").count() == 5
+    check DF.fromFile("tests/data/mini.csv", hasHeader=false).count() == 6
+    const schema = [
+      col(StrCol, "name"),
+      col(IntCol, "age")
+    ]
+    let df = DF.fromFile("tests/data/mini.csv").map(schemaParser(schema))
+    check df.count() == 5
+    check df.filter(p => p.name.startsWith("B")).count() == 2
+    check df.map(p => p.age).max() == 58
+
 
 UnitTestSuite("Indexed Transformations"):
   test "take":
