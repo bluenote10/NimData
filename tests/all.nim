@@ -2,8 +2,8 @@
 import future
 import strutils
 
-import ../src/nimdata
-import ../src/nimdata_utils
+import nimdata
+import nimdata_utils
 
 
 UnitTestSuite("Schema Parser"):

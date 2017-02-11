@@ -1,7 +1,8 @@
 
-import ../../src/nimdata
 import future
 import strutils
+
+import nimdata
 
 
 proc example01() =
