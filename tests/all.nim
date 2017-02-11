@@ -1,5 +1,6 @@
 
 import future
+import strutils
 
 import ../src/nimdata
 import ../src/nimdata_utils
@@ -43,7 +44,7 @@ UnitTestSuite("CachedDataFrame"):
 
 
 UnitTestSuite("MappedDataFrame"):
-  test "Contstruction":
+  test "Construction":
     let data = DF.fromSeq(@[1, 2, 3])
     let mapped1 = data.map(x => x*2)
     let mapped2 = DF.fromSeq(@[1, 2, 3]).map(x => x*2)
@@ -81,7 +82,14 @@ UnitTestSuite("MappedDataFrame"):
     check data.filter(x => x mod 2 == 1).map(x => x * 100).collect() == @[100, 300]
 
   test "Type Conversion":
-    discard # check DF.fromSeq(@[1, 2, 3]).map(i => $i).collect() == @["1", "2", "3"]
+    proc convert(i: int): string = $i
+    check DF.fromSeq(@[1, 2, 3]).map(convert).collect() == @["1", "2", "3"]
+    check DF.fromSeq(@[1, 2, 3]).map(x => $x).collect() == @["1", "2", "3"]
+    check DF.fromSeq(@[1, 2, 3]).map(x => x == 2).collect() == @[false, true, false]
+    check DF.fromSeq(@[1, 2, 3]).map(x => x.float).collect() == @[1.0, 2.0, 3.0]
+
+    check DF.fromSeq(@["1", "2", "3"]).map(x => x.parseInt).collect() == @[1, 2, 3]
+    check DF.fromSeq(@["1", "2", "3"]).map(x => x.parseFloat).collect() == @[1.0, 2.0, 3.0]
 
 
 UnitTestSuite("FilteredDataFrame"):
@@ -162,10 +170,8 @@ UnitTestSuite("Indexed Operations"):
     check DF.fromSeq(@[1, 2, 3]).filterWithIndex((i, x) => i == 1).collect() == @[2]
 
   test "MapWithIndex":
-    discard
-    #check DF.fromSeq(@[1, 2, 3]).map(i => $i).collect() == @["1", "2", "3"]
-    #check DF.fromSeq(@[1, 2, 3]).map(i => i == 2).collect() == @[false, true, false]
-    #check DF.fromSeq(@[1, 2, 3]).mapWithIndex((i, x) => i == 1).collect() == @[false, true, false]
+    check DF.fromSeq(@[1, 2, 3]).mapWithIndex((i, x) => i == 1).collect() == @[false, true, false]
+    check DF.fromSeq(@[1, 2, 3]).mapWithIndex((i, x) => i*x).collect() == @[0, 2, 6]
 
 
 UnitTestSuite("Type specific"):

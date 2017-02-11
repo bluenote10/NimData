@@ -23,11 +23,11 @@ type
   CachedDataFrame*[T] = ref object of DataFrame[T]
     data: seq[T]
 
-  MappedDataFrame*[T, U] = ref object of DataFrame[T]
+  MappedDataFrame*[U, T] = ref object of DataFrame[T]
     orig: DataFrame[U]
     f: proc(x: U): T
 
-  MappedIndexDataFrame*[T, U] = ref object of DataFrame[T]
+  MappedIndexDataFrame*[U, T] = ref object of DataFrame[T]
     orig: DataFrame[U]
     f: proc(i: int, x: U): T
 
@@ -61,15 +61,15 @@ proc fromSeq*[T](dfc: DataFrameContext, data: seq[T]): DataFrame[T] =
 # Transformations
 # -----------------------------------------------------------------------------
 
-method map*[T, U](df: DataFrame[U], f: proc(x: U): T): DataFrame[T] {.base.} =
-  ## Transforms a ``DataFrame[T]`` into a ``DataFrame[U]`` by applying a
+method map*[U, T](df: DataFrame[U], f: proc(x: U): T): DataFrame[T] {.base.} =
+  ## Transforms a ``DataFrame[U]`` into a ``DataFrame[T]`` by applying a
   ## mapping function ``f``.
-  result = MappedDataFrame[T, U](orig: df, f: f)
+  result = MappedDataFrame[U, T](orig: df, f: f)
 
-method mapWithIndex*[T, U](df: DataFrame[U], f: proc(i: int, x: U): T): DataFrame[T] {.base.} =
-  ## Transforms a ``DataFrame[T]`` into a ``DataFrame[U]`` by applying a
+method mapWithIndex*[U, T](df: DataFrame[U], f: proc(i: int, x: U): T): DataFrame[T] {.base.} =
+  ## Transforms a ``DataFrame[U]`` into a ``DataFrame[T]`` by applying a
   ## mapping function ``f``.
-  result = MappedIndexDataFrame[T, U](orig: df, f: f)
+  result = MappedIndexDataFrame[U, T](orig: df, f: f)
 
 method filter*[T](df: DataFrame[T], f: proc(x: T): bool): DataFrame[T] {.base.} =
   ## Filters a data frame by applying a filter function ``f``.
