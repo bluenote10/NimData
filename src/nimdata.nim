@@ -1,11 +1,13 @@
-import times
+import future
 import typetraits
+import macros
+
 import strutils
 import sequtils
-import future
-import macros
-import random
 
+import random
+import sets
+import times
 import os
 import browsers
 
@@ -38,6 +40,10 @@ type
   FilteredIndexDataFrame*[T] = ref object of DataFrame[T]
     orig: DataFrame[T]
     f: proc(i: int, x: T): bool
+
+  UniqueDataFrame*[T] = ref object of DataFrame[T]
+    orig: DataFrame[T]
+    seen: HashSet[T]
 
 # -----------------------------------------------------------------------------
 # Transformations
@@ -76,6 +82,14 @@ method sample*[T](df: DataFrame[T], probability: float): DataFrame[T] {.base.} =
   ## sampling ``probability``.
   proc filter(x: T): bool = probability > random(1.0)
   result = FilteredDataFrame[T](orig: df, f: filter)
+
+method unique*[T](df: DataFrame[T]): DataFrame[T] {.base.} =
+  ## Returns a data frame, which consists of the unique values of the input
+  ## data frame. Note that the memory requirement is linear in the number
+  ## of unique values, so use with care. Type T must provide a hash function
+  ## with signature ``hash(x: T): Hash`` (see
+  ## `hashes <https://nim-lang.org/docs/hashes.html>`_ documentation).
+  result = UniqueDataFrame[T](orig: df, seen: initSet[T]())
 
 # -----------------------------------------------------------------------------
 # Iterators
@@ -124,6 +138,13 @@ method iter*[T](df: FilteredIndexDataFrame[T]): (iterator(): T) =
       if df.f(i, x):
         yield x
       i += 1
+
+method iter*[T](df: UniqueDataFrame[T]): (iterator(): T) =
+  result = iterator(): T =
+    var it = df.orig.iter()
+    for x in toIterBugfix(it):
+      if not df.seen.containsOrIncl(x):
+        yield x
 
 # -----------------------------------------------------------------------------
 # Actions

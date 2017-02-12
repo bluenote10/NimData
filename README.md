@@ -72,7 +72,7 @@ df.filter(record =>
     record.awayTeam.contains("Freiburg")
   )
   .take(5)
-  .foreach(echoGeneric)
+  .forEach(echoGeneric)
 # =>
 # (index: "9128", homeTeam: "Bayern Muenchen", awayTeam: "SC Freiburg", homeGoals: 3, awayGoals: 1, round: 1, year: 1993, date: 1993-08-07 08:30:00)
 # (index: "9135", homeTeam: "SC Freiburg", awayTeam: "Wattenscheid 09", homeGoals: 4, awayGoals: 1, round: 2, year: 1993, date: 1993-08-14 08:30:00)

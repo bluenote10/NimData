@@ -53,7 +53,7 @@ proc example01() =
       record.awayTeam.contains("Freiburg")
     )
     .take(5)
-    .foreach(echoGeneric)
+    .forEach(echoGeneric)
 
   # ... or e.g. games with many home goals:
   df.filter(record => record.homeGoals >= 10)
