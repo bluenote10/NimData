@@ -1,51 +1,66 @@
 
 import future
 import strutils
-
 import nimdata
+import times
 
 
-proc example01() =
-  let input = @[
-      "Jon;22",
-      "Bart;33",
-      "Bob;49",
-      "Jack;12",
-      "Moe;58",
-  ]
+template runTimed(name: string, body: untyped) =
+  echo "Running: ", name, "..."
+  let t1 = epochTime()
+  body
+  let t2 = epochTime()
+  echo "Time: ", t2 - t1
+
+
+proc runTests() =
   const schema = [
-    col(StrCol, "name"),
-    col(IntCol, "age")
+    col(FloatCol, "floatA"),
+    col(FloatCol, "floatB"),
+    col(IntCol, "intA"),
+    col(IntCol, "intB"),
   ]
 
-  let df = DF.fromSeq(input)
-             .map(schemaParser(schema, ';'))
-             .filter(person => person.age > 10)
-             .filter(person => person.name.startsWith("B"))
-             .sample(probability = 1.0)
-             # up to this point nothing has happened, transformations are lazy.
-             .cache()
-             # this call performs all transformations and caches the result in memory.
+  runTimed("Pure iteration"):
+    discard DF.fromFile("test_01.csv")
+              .count()
+  runTimed("Pure iteration"):
+    discard DF.fromFile("test_01.csv")
+              .count()
+  runTimed("Pure iteration"):
+    discard DF.fromFile("test_01.csv")
+              .count()
 
-  # echo df.count() # causes runtime error :(
-  echo df.collect()
-  echo df.map(x => x.age).collect()
+  runTimed("With parsing"):
+    discard DF.fromFile("test_01.csv")
+              .map(schemaParser(schema, ','))
+              .count()
 
-  echo df.map(x => x.age).mean()
-  echo df.map(x => x.age).min()
-  echo df.map(x => x.age).max()
+  runTimed("With parsing + 1 dummy map"):
+    discard DF.fromFile("test_01.csv")
+              .map(schemaParser(schema, ','))
+              .map(x => x)
+              .count()
 
-  df.toHtml("table.html")
-  df.toCsv("table.csv")
-  df.openInBrowser()
+  runTimed("With parsing + 2 dummy map"):
+    discard DF.fromFile("test_01.csv")
+              .map(schemaParser(schema, ','))
+              .map(x => x)
+              .map(x => x)
+              .count()
+
+  runTimed("With parsing + 1 dummy filter"):
+    discard DF.fromFile("test_01.csv")
+              .map(schemaParser(schema, ','))
+              .filter(x => true)
+              .count()
+
+  runTimed("With parsing + 2 dummy filter"):
+    discard DF.fromFile("test_01.csv")
+              .map(schemaParser(schema, ','))
+              .filter(x => true)
+              .filter(x => true)
+              .count()
 
 
-proc example02() =
-  let df = DF.fromFile("table.csv")
-  echo df.count()
-  echo df.collect()
-
-
-example01()
-example02()
-
+runTests()

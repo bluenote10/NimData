@@ -13,11 +13,12 @@ class TimedContext(object):
         self.context = context
 
     def __enter__(self):
+        print("Running: " + self.context + "...")
         self.t1 = time.time()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.t2 = time.time()
-        print("{}: {}".format(self.context, self.t2 - self.t1))
+        print("Time: {}".format(self.t2 - self.t1))
 
 
 def gen_data(N=1*1000*1000, num_int_cols=2, num_float_cols=2):
@@ -34,7 +35,7 @@ def gen_data(N=1*1000*1000, num_int_cols=2, num_float_cols=2):
     df.to_csv("test_01.csv", index=False, header=False)
 
 
-gen_data()
+# gen_data()
 test_file = "test_01.csv"
 
 with TimedContext("Count rows (Python)"):
@@ -44,5 +45,13 @@ with TimedContext("Count rows (Python)"):
     print(count)
 
 with TimedContext("Count rows (Pandas)"):
-    df = pd.read_csv(test_file, header=False)
+    df = pd.read_csv(test_file, header=None, names=["A", "B", "C", "D"])
     print(len(df))
+
+with TimedContext("Compute means (Pandas)"):
+    df = pd.read_csv(test_file, header=None, names=["A", "B", "C", "D"])
+    meanA = df.A.mean()
+    meanB = df.B.mean()
+    meanC = df.C.mean()
+    meanD = df.D.mean()
+    print(meanA, meanB, meanC, meanD)
