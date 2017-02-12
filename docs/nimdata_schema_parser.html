@@ -1222,8 +1222,13 @@ function main() {
   StrCol, IntCol, FloatCol"><wbr />Col<wbr />Kind<span class="attachedType" style="visibility:hidden"></span></a></li>
   <li><a class="reference" href="#Column"
     title="Column = object
-  kind*: ColKind
-  name*: string"><wbr />Column<span class="attachedType" style="visibility:hidden"></span></a></li>
+  name*: string
+  case kind*: ColKind
+  of StrCol:
+      stripQuotes: bool
+
+  else:
+      nil"><wbr />Column<span class="attachedType" style="visibility:hidden"></span></a></li>
 
   </ul>
 </li>
@@ -1238,8 +1243,8 @@ function main() {
 <li>
   <a class="reference reference-toplevel" href="#16" id="66">Macros</a>
   <ul class="simple simple-toc-section">
-      <li><a class="reference" href="#schemaParser.m,"
-    title="schemaParser[](schema: static[openArray[Column]]): untyped"><wbr />schema<wbr />Parser<span class="attachedType" style="visibility:hidden">Column</span></a></li>
+      <li><a class="reference" href="#schemaParser.m,,"
+    title="schemaParser[](schema: static[openArray[Column]]; sep: static[char]): untyped"><wbr />schema<wbr />Parser<span class="attachedType" style="visibility:hidden">Column</span></a></li>
 
   </ul>
 </li>
@@ -1269,9 +1274,15 @@ class="link-seesrc" target="_blank">Source</a>
 
 </dd>
 <dt id="Column"><a name="Column"></a><pre><span class="Identifier">Column</span> <span class="Other">=</span> <span class="Keyword">object</span>
-  <span class="Identifier">kind</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">ColKind</span>
   <span class="Identifier">name</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">string</span>
-</pre></dt>
+  <span class="Keyword">case</span> <span class="Identifier">kind</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">ColKind</span>
+  <span class="Keyword">of</span> <span class="Identifier">StrCol</span><span class="Other">:</span>
+      <span class="Identifier">stripQuotes</span><span class="Other">:</span> <span class="Identifier">bool</span>
+
+  <span class="Keyword">else</span><span class="Other">:</span>
+      <span class="Keyword">nil</span>
+
+  </pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
@@ -1289,9 +1300,9 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata_schema_parser.nim#L14"
+href="/tree/master/src/nimdata_schema_parser.nim#L18"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata_schema_parser.nim#L14" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata_schema_parser.nim#L18" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 
@@ -1299,13 +1310,13 @@ class="link-seesrc" target="_blank">Source</a>
 <div class="section" id="16">
 <h1><a class="toc-backref" href="#16">Macros</a></h1>
 <dl class="item">
-<dt id="schemaParser"><a name="schemaParser.m,"></a><pre><span class="Keyword">macro</span> <span class="Identifier">schemaParser</span><span class="Other">[</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">schema</span><span class="Other">:</span> <span class="Keyword">static</span><span class="Other">[</span><span class="Identifier">openArray</span><span class="Other">[</span><span class="Identifier">Column</span><span class="Other">]</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">untyped</span></pre></dt>
+<dt id="schemaParser"><a name="schemaParser.m,,"></a><pre><span class="Keyword">macro</span> <span class="Identifier">schemaParser</span><span class="Other">[</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">schema</span><span class="Other">:</span> <span class="Keyword">static</span><span class="Other">[</span><span class="Identifier">openArray</span><span class="Other">[</span><span class="Identifier">Column</span><span class="Other">]</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">sep</span><span class="Other">:</span> <span class="Keyword">static</span><span class="Other">[</span><span class="Identifier">char</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">untyped</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata_schema_parser.nim#L18"
+href="/tree/master/src/nimdata_schema_parser.nim#L22"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata_schema_parser.nim#L18" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata_schema_parser.nim#L22" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 
@@ -1318,7 +1329,7 @@ class="link-seesrc" target="_blank">Source</a>
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br/>
-        <small>Made with Nim. Generated: 2017-02-11 23:56:28 UTC</small>
+        <small>Made with Nim. Generated: 2017-02-12 14:53:43 UTC</small>
       </div>
     </div>
   </div>

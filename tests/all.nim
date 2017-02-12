@@ -13,9 +13,19 @@ UnitTestSuite("Schema Parser"):
       col(IntCol, "columnA"),
       col(IntCol, "columnB")
     ]
-    let parser = schemaParser(schema)
+    let parser = schemaParser(schema, ';')
     let result = parser("1;2")
     check result == (columnA: 1, columnB: 2)
+
+  test "Different separator":
+    const schema = [
+      col(IntCol, "columnA"),
+      col(IntCol, "columnB")
+    ]
+    let parser1 = schemaParser(schema, ',')
+    let parser2 = schemaParser(schema, sep=',')
+    check parser1("1,2") == (columnA: 1, columnB: 2)
+    check parser2("1,2") == (columnA: 1, columnB: 2)
 
 
 UnitTestSuite("CachedDataFrame"):
@@ -146,7 +156,7 @@ UnitTestSuite("Non-generic DataFrames"):
       col(StrCol, "name"),
       col(IntCol, "age")
     ]
-    let df = DF.fromFile("tests/data/mini.csv").map(schemaParser(schema))
+    let df = DF.fromFile("tests/data/mini.csv").map(schemaParser(schema, ';'))
     check df.count() == 5
     check df.filter(p => p.name.startsWith("B")).count() == 2
     check df.map(p => p.age).max() == 58

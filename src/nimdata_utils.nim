@@ -21,13 +21,24 @@ macro debug*(n: varargs[typed]): untyped =
   # add new line
   add(result, newCall("writeLine", newIdentNode("stdout"), newStrLitNode("")))
 
-macro debugExpr*(arg: untyped): untyped =
+macro showExpr*(arg: untyped): untyped =
   let argCallsite = callsite()[1]
   result = newNimNode(nnkStmtList)
-  result.add(newCall("write", newIdentNode("stdout"), argCallsite.toStrLit))
-  result.add(newCall("write", newIdentNode("stdout"), newStrLitNode(" => ")))
+  result.add(newCall("writeLine", newIdentNode("stdout"), argCallsite.toStrLit))
+  #result.add(newCall("write", newIdentNode("stdout"), newStrLitNode(" => ")))
   result.add(newCall("writeLine", newIdentNode("stdout"), arg))
 
+macro showStmt*(arg: untyped): untyped =
+  let argCallsite = callsite()[1]
+  result = newNimNode(nnkStmtList)
+  result.add(newCall("writeLine", newIdentNode("stdout"), argCallsite.toStrLit))
+  #result.add(newCall("write", newIdentNode("stdout"), newStrLitNode(" => ")))
+  result.add(arg)
+
+template scope*(name: string, code: untyped): untyped =
+  echo "\n *** ", name
+  block:
+    code
 
 proc seqAddr*[T](s: var seq[T]): ptr T =
   if s.len > 0:

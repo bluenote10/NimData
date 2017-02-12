@@ -7,17 +7,22 @@ type
     StrCol,
     IntCol,
     FloatCol
-  Column* = object
-    kind*: ColKind
+  Column* = object # TODO: this should get documented: https://forum.nim-lang.org/t/196
     name*: string
+    case kind*: ColKind
+    of StrCol:
+      stripQuotes: bool
+    else:
+      discard
 
 proc col*(kind: ColKind, name: string): Column =
   Column(kind: kind, name: name)
 
 
-macro schemaParser*(schema: static[openarray[Column]]): untyped =
-  #let returnType = newBracketExpr(newIdentNode(!"tuple"), newIdentNode(!"y"))
-  #let returnType = newNimNode(nnkBracketExpr).add(ident("tuple"), newColonExpr(ident("x"), ident("int")))
+macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyped =
+  # Doesn't seem to work to add: extraArgs: varargs[untyped]
+  # echo "extraArgs: ", extraArgs.treerepr
+
   var returnType = newNimNode(nnkTupleTy)
   for col in schema:
     # TODO: This can probably done using true types + type.getType.name
@@ -44,10 +49,12 @@ macro schemaParser*(schema: static[openarray[Column]]): untyped =
 
   let fieldsIdent = ident("fields")
   let expectedFields = newIntLitNode(schema.len)
+  let sepIdent = newLit(sep)
   var body = quote do:
-    let `fieldsIdent` = s.split(";")
+    let `fieldsIdent` = s.split(`sepIdent`)
     if `fieldsIdent`.len != `expectedFields`:
       raise newException(IOError, "Unexpected number of fields")
+
   for i, col in schema.pairs:
     let ass_rhs = case col.kind
       of StrCol:
@@ -72,3 +79,4 @@ macro schemaParser*(schema: static[openarray[Column]]): untyped =
   when defined(checkMacros):
     echo result.treerepr
     echo result.repr
+

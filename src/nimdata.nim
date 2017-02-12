@@ -166,6 +166,13 @@ proc cache*[T](df: DataFrame[T]): DataFrame[T] = # TODO: want base method?
   result = CachedDataFrame[T](data: data)
 
 
+proc forEach*[T](df: DataFrame[T], f: proc(x: T): void) =
+  ## Applies a function ``f`` to all elements of a data frame.
+  let it = df.iter()
+  for x in it():
+    f(x)
+
+
 method collect*[T](df: DataFrame[T]): seq[T] {.base.} =
   ## Collects the content of a ``DataFrame[T]`` and returns it as ``seq[T]``.
   result = newSeq[T]()
@@ -176,6 +183,10 @@ method collect*[T](df: DataFrame[T]): seq[T] {.base.} =
 method collect*[T](df: CachedDataFrame[T]): seq[T] =
   ## Specialized implementation
   result = df.data
+
+proc echoGeneric*[T](x: T) {.procvar.} =
+  ## Convenience to allow ``df.forEach(echoGeneric)``
+  echo x
 
 # -----------------------------------------------------------------------------
 # Actions (numerical)

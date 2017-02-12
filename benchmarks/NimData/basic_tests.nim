@@ -19,10 +19,10 @@ proc example01() =
   ]
 
   let df = DF.fromSeq(input)
-             .map(schemaParser(schema))
+             .map(schemaParser(schema, ';'))
              .filter(person => person.age > 10)
              .filter(person => person.name.startsWith("B"))
-             .sample(probability=1.0)
+             .sample(probability = 1.0)
              # up to this point nothing has happened, transformations are lazy.
              .cache()
              # this call performs all transformations and caches the result in memory.

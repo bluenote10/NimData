@@ -1269,6 +1269,10 @@ function main() {
     title="fold[U, T](df: DataFrame[U]; init: T; f: proc (a: T; b: U): T): T"><wbr />fold<span class="attachedType" style="visibility:hidden">DataFrame</span></a></li>
   <li><a class="reference" href="#cache,DataFrame[T]"
     title="cache[T](df: DataFrame[T]): DataFrame[T]"><wbr />cache<span class="attachedType" style="visibility:hidden">DataFrame</span></a></li>
+  <li><a class="reference" href="#forEach,DataFrame[T],proc(T)"
+    title="forEach[T](df: DataFrame[T]; f: proc (x: T): void)"><wbr />for<wbr />Each<span class="attachedType" style="visibility:hidden">DataFrame</span></a></li>
+  <li><a class="reference" href="#echoGeneric,T"
+    title="echoGeneric[T](x: T)"><wbr />echo<wbr />Generic<span class="attachedType" style="visibility:hidden"></span></a></li>
   <li><a class="reference" href="#sum,DataFrame[T]"
     title="sum[T](df: DataFrame[T]): T"><wbr />sum<span class="attachedType" style="visibility:hidden">DataFrame</span></a></li>
   <li><a class="reference" href="#mean,DataFrame[T]"
@@ -1425,9 +1429,9 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata.nim#L299"
+href="/tree/master/src/nimdata.nim#L310"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata.nim#L299" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata.nim#L310" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <dt id="RangeDataFrame"><a name="RangeDataFrame"></a><pre><span class="Identifier">RangeDataFrame</span> <span class="Other">=</span> <span class="Keyword">ref</span> <span class="Keyword">object</span> <span class="Keyword">of</span> <span class="Identifier">DataFrame</span><span class="Other">[</span><span class="Identifier">int</span><span class="Other">]</span>
@@ -1436,9 +1440,9 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata.nim#L314"
+href="/tree/master/src/nimdata.nim#L325"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata.nim#L314" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata.nim#L325" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <dt id="FileRowsDataFrame"><a name="FileRowsDataFrame"></a><pre><span class="Identifier">FileRowsDataFrame</span> <span class="Other">=</span> <span class="Keyword">ref</span> <span class="Keyword">object</span> <span class="Keyword">of</span> <span class="Identifier">DataFrame</span><span class="Other">[</span><span class="Identifier">string</span><span class="Other">]</span>
@@ -1448,9 +1452,9 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata.nim#L342"
+href="/tree/master/src/nimdata.nim#L353"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata.nim#L342" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata.nim#L353" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 
@@ -1462,9 +1466,9 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 Currently this constant is purely used for scoping, allowing to write expressions like <tt class="docutils literal"><span class="pre">DF.fromFile(...)</span></tt> or <tt class="docutils literal"><span class="pre">DF.fromSeq(...)</span></tt>. Eventually this might be used to store general context configuration.
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata.nim#L302"
+href="/tree/master/src/nimdata.nim#L313"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata.nim#L302" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata.nim#L313" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 
@@ -1508,40 +1512,58 @@ class="link-seesrc" target="_blank">Source</a>
 <a href="/edit/devel/src/nimdata.nim#L158" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
+<dt id="forEach"><a name="forEach,DataFrame[T],proc(T)"></a><pre><span class="Keyword">proc</span> <span class="Identifier">forEach</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">df</span><span class="Other">:</span> <span class="Identifier">DataFrame</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">f</span><span class="Other">:</span> <span class="Keyword">proc</span> <span class="Other">(</span><span class="Identifier">x</span><span class="Other">:</span> <span class="Identifier">T</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">void</span><span class="Other">)</span></pre></dt>
+<dd>
+Applies a function <tt class="docutils literal"><span class="pre">f</span></tt> to all elements of a data frame.
+&nbsp;&nbsp;<a
+href="/tree/master/src/nimdata.nim#L169"
+class="link-seesrc" target="_blank">Source</a>
+<a href="/edit/devel/src/nimdata.nim#L169" class="link-seesrc" target="_blank" >Edit</a>
+
+</dd>
+<dt id="echoGeneric"><a name="echoGeneric,T"></a><pre><span class="Keyword">proc</span> <span class="Identifier">echoGeneric</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">x</span><span class="Other">:</span> <span class="Identifier">T</span><span class="Other">)</span> <span class="Other pragmabegin">{.</span><div class="pragma"><span class="Identifier">procvar</span></div><span class="Other pragmaend">.}</span></pre></dt>
+<dd>
+Convenience to allow <tt class="docutils literal"><span class="pre">df.forEach(echoGeneric)</span></tt>
+&nbsp;&nbsp;<a
+href="/tree/master/src/nimdata.nim#L187"
+class="link-seesrc" target="_blank">Source</a>
+<a href="/edit/devel/src/nimdata.nim#L187" class="link-seesrc" target="_blank" >Edit</a>
+
+</dd>
 <dt id="sum"><a name="sum,DataFrame[T]"></a><pre><span class="Keyword">proc</span> <span class="Identifier">sum</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">df</span><span class="Other">:</span> <span class="Identifier">DataFrame</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">T</span></pre></dt>
 <dd>
 Computes the sum of a data frame of numerical type <tt class="docutils literal"><span class="pre">T</span></tt>.
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata.nim#L184"
+href="/tree/master/src/nimdata.nim#L195"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata.nim#L184" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata.nim#L195" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <dt id="mean"><a name="mean,DataFrame[T]"></a><pre><span class="Keyword">proc</span> <span class="Identifier">mean</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">df</span><span class="Other">:</span> <span class="Identifier">DataFrame</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">float</span></pre></dt>
 <dd>
 Computes the mean of a data frame of numerical type <tt class="docutils literal"><span class="pre">T</span></tt>.
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata.nim#L190"
+href="/tree/master/src/nimdata.nim#L201"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata.nim#L190" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata.nim#L201" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <dt id="min"><a name="min,DataFrame[T]"></a><pre><span class="Keyword">proc</span> <span class="Identifier">min</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">df</span><span class="Other">:</span> <span class="Identifier">DataFrame</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">T</span></pre></dt>
 <dd>
 Computes the minimum of a data frame of numerical type <tt class="docutils literal"><span class="pre">T</span></tt>.
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata.nim#L200"
+href="/tree/master/src/nimdata.nim#L211"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata.nim#L200" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata.nim#L211" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <dt id="max"><a name="max,DataFrame[T]"></a><pre><span class="Keyword">proc</span> <span class="Identifier">max</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">df</span><span class="Other">:</span> <span class="Identifier">DataFrame</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">T</span></pre></dt>
 <dd>
 Computes the maximum of a data frame of numerical type <tt class="docutils literal"><span class="pre">T</span></tt>.
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata.nim#L211"
+href="/tree/master/src/nimdata.nim#L222"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata.nim#L211" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata.nim#L222" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <dt id="toCsv"><a name="toCsv,DataFrame[T],string,char"></a><pre><span class="Keyword">proc</span> <span class="Identifier">toCsv</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">:</span> <span class="Keyword">tuple</span> <span class="Operator">|</span>
@@ -1549,9 +1571,9 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 Store the data frame in a CSV
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata.nim#L226"
+href="/tree/master/src/nimdata.nim#L237"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata.nim#L226" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata.nim#L237" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <dt id="toHtml"><a name="toHtml,DataFrame[T],string"></a><pre><span class="Keyword">proc</span> <span class="Identifier">toHtml</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">:</span> <span class="Keyword">tuple</span> <span class="Operator">|</span>
@@ -1559,9 +1581,9 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 Store the data frame in an HTML providing a simple table view. The current implementation uses simple static HTML, so make sure that your data frame is filtered down to a reasonable size.
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata.nim#L252"
+href="/tree/master/src/nimdata.nim#L263"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata.nim#L252" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata.nim#L263" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <dt id="openInBrowser"><a name="openInBrowser,DataFrame[T]"></a><pre><span class="Keyword">proc</span> <span class="Identifier">openInBrowser</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">:</span> <span class="Keyword">tuple</span> <span class="Operator">|</span>
@@ -1569,18 +1591,18 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 Opens a table view of the data frame in the default browser.
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata.nim#L286"
+href="/tree/master/src/nimdata.nim#L297"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata.nim#L286" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata.nim#L297" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <dt id="fromSeq"><a name="fromSeq,DataFrameContext,seq[T]"></a><pre><span class="Keyword">proc</span> <span class="Identifier">fromSeq</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">dfc</span><span class="Other">:</span> <span class="Identifier">DataFrameContext</span><span class="Other">;</span> <span class="Identifier">data</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">DataFrame</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span></pre></dt>
 <dd>
 Constructs a data frame from a sequence.
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata.nim#L308"
+href="/tree/master/src/nimdata.nim#L319"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata.nim#L308" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata.nim#L319" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <dt id="fromRange"><a name="fromRange,DataFrameContext,int,int"></a><pre><span class="Keyword">proc</span> <span class="Identifier">fromRange</span><span class="Other">(</span><span class="Identifier">dfc</span><span class="Other">:</span> <span class="Identifier">DataFrameContext</span><span class="Other">;</span> <span class="Identifier">indexFrom</span><span class="Other">:</span> <span class="Identifier">int</span><span class="Other">;</span> <span class="Identifier">indexUpto</span><span class="Other">:</span> <span class="Identifier">int</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">DataFrame</span><span class="Other">[</span><span class="Identifier">int</span><span class="Other">]</span> <span class="Other pragmabegin">{.</span><div class="pragma">
@@ -1588,9 +1610,9 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 Constructs a <tt class="docutils literal"><span class="pre">DataFrame[int]</span></tt> which iterates over the interval <tt class="docutils literal"><span class="pre">[indexFrom, indexUpto)</span></tt>, i.e., from <tt class="docutils literal"><span class="pre">indexFrom</span></tt> (inclusive) up to <tt class="docutils literal"><span class="pre">indexUpto</span></tt> (exclusive).
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata.nim#L317"
+href="/tree/master/src/nimdata.nim#L328"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata.nim#L317" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata.nim#L328" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <dt id="fromRange"><a name="fromRange,DataFrameContext,int"></a><pre><span class="Keyword">proc</span> <span class="Identifier">fromRange</span><span class="Other">(</span><span class="Identifier">dfc</span><span class="Other">:</span> <span class="Identifier">DataFrameContext</span><span class="Other">;</span> <span class="Identifier">indexUpto</span><span class="Other">:</span> <span class="Identifier">int</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">DataFrame</span><span class="Other">[</span><span class="Identifier">int</span><span class="Other">]</span> <span class="Other pragmabegin">{.</span><div class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span>
@@ -1598,9 +1620,9 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 Constructs a <tt class="docutils literal"><span class="pre">DataFrame[int]</span></tt> which iterates over the interval <tt class="docutils literal"><span class="pre">[0, indexUpto)</span></tt>, i.e., from 0 (inclusive) up to <tt class="docutils literal"><span class="pre">indexUpto</span></tt> (exclusive).
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata.nim#L326"
+href="/tree/master/src/nimdata.nim#L337"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata.nim#L326" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata.nim#L337" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <dt id="fromFile"><a name="fromFile,DataFrameContext,string,bool"></a><pre><span class="Keyword">proc</span> <span class="Identifier">fromFile</span><span class="Other">(</span><span class="Identifier">dfc</span><span class="Other">:</span> <span class="Identifier">DataFrameContext</span><span class="Other">;</span> <span class="Identifier">filename</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">;</span> <span class="Identifier">hasHeader</span><span class="Other">:</span> <span class="Identifier">bool</span> <span class="Other">=</span> <span class="Identifier">true</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">DataFrame</span><span class="Other">[</span>
@@ -1608,9 +1630,9 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 Constructs a data frame from a text file, iterating the file line by line.
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata.nim#L346"
+href="/tree/master/src/nimdata.nim#L357"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata.nim#L346" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata.nim#L357" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 
@@ -1740,36 +1762,36 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 Collects the content of a <tt class="docutils literal"><span class="pre">DataFrame[T]</span></tt> and returns it as <tt class="docutils literal"><span class="pre">seq[T]</span></tt>.
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata.nim#L169"
+href="/tree/master/src/nimdata.nim#L176"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata.nim#L169" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata.nim#L176" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <dt id="collect"><a name="collect.e,CachedDataFrame[T]"></a><pre><span class="Keyword">method</span> <span class="Identifier">collect</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">df</span><span class="Other">:</span> <span class="Identifier">CachedDataFrame</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">T</span><span class="Other">]</span></pre></dt>
 <dd>
 Specialized implementation
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata.nim#L176"
+href="/tree/master/src/nimdata.nim#L183"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata.nim#L176" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata.nim#L183" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <dt id="iter"><a name="iter.e,RangeDataFrame"></a><pre><span class="Keyword">method</span> <span class="Identifier">iter</span><span class="Other">(</span><span class="Identifier">df</span><span class="Other">:</span> <span class="Identifier">RangeDataFrame</span><span class="Other">)</span><span class="Other">:</span> <span class="Other">(</span><span class="Keyword">iterator</span> <span class="Other">(</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">int</span><span class="Other">)</span> <span class="Other pragmabegin">{.</span><div class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></div><span class="Other pragmaend">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata.nim#L335"
+href="/tree/master/src/nimdata.nim#L346"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata.nim#L335" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata.nim#L346" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <dt id="iter"><a name="iter.e,FileRowsDataFrame"></a><pre><span class="Keyword">method</span> <span class="Identifier">iter</span><span class="Other">(</span><span class="Identifier">df</span><span class="Other">:</span> <span class="Identifier">FileRowsDataFrame</span><span class="Other">)</span><span class="Other">:</span> <span class="Other">(</span><span class="Keyword">iterator</span> <span class="Other">(</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span> <span class="Other pragmabegin">{.</span><div class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></div><span class="Other pragmaend">.}</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata.nim#L354"
+href="/tree/master/src/nimdata.nim#L365"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata.nim#L354" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata.nim#L365" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 
@@ -1782,7 +1804,7 @@ class="link-seesrc" target="_blank">Source</a>
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br/>
-        <small>Made with Nim. Generated: 2017-02-11 23:56:28 UTC</small>
+        <small>Made with Nim. Generated: 2017-02-12 14:53:43 UTC</small>
       </div>
     </div>
   </div>

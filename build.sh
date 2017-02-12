@@ -1,6 +1,7 @@
 #!/bin/bash
 
 file=tests/all.nim
+#file=examples/example_01.nim
 #file=benchmarks/NimData/basic_tests.nim
 
 fileAbs=`readlink -m $file`
