@@ -126,7 +126,7 @@ See [module docs](https://bluenote10.github.io/NimData/nimdata.html).
 
 ## Next steps
 
-- More transformation/actions (flatMap, groupBy, join, sort, Union, window)
+- More transformation/actions (flatMap, groupBy, join, sort, union, window)
 - More data formats
 - Plotting (maybe in the form of Bokeh bindings)
 - REPL or Jupyter kernel

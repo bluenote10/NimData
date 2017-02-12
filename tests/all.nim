@@ -10,22 +10,24 @@ import nimdata_utils
 UnitTestSuite("Schema Parser"):
   test "Parsing":
     const schema = [
-      col(IntCol, "columnA"),
-      col(IntCol, "columnB")
+      col(StrCol, "columnA"),
+      col(IntCol, "columnB"),
+      col(FloatCol, "columnC"),
     ]
     let parser = schemaParser(schema, ';')
-    let result = parser("1;2")
-    check result == (columnA: 1, columnB: 2)
+    let result = parser("1;2;3.5")
+    check result == (columnA: "1", columnB: 2, columnC: 3.5)
 
   test "Different separator":
     const schema = [
-      col(IntCol, "columnA"),
-      col(IntCol, "columnB")
+      col(StrCol, "columnA"),
+      col(IntCol, "columnB"),
+      col(FloatCol, "columnC"),
     ]
     let parser1 = schemaParser(schema, ',')
     let parser2 = schemaParser(schema, sep=',')
-    check parser1("1,2") == (columnA: 1, columnB: 2)
-    check parser2("1,2") == (columnA: 1, columnB: 2)
+    check parser1("1,2,3.5") == (columnA: "1", columnB: 2, columnC: 3.5)
+    check parser2("1,2,3.5") == (columnA: "1", columnB: 2, columnC: 3.5)
 
 
 UnitTestSuite("CachedDataFrame"):

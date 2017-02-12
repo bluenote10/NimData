@@ -63,7 +63,7 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
         let parserFunc = bindSym("parseInt")
         newCall(parserFunc, newNimNode(nnkBracketExpr).add(ident("fields"), newIntLitNode(i)))
       of FloatCol:
-        let parserFunc = bindSym("parseInt")
+        let parserFunc = bindSym("parseFloat")
         newCall(parserFunc, newNimNode(nnkBracketExpr).add(ident("fields"), newIntLitNode(i)))
     let ass_lhs = newDotExpr(ident("result"), ident(col.name))
     body.add(newAssignment(ass_lhs, ass_rhs))
