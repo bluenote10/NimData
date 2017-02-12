@@ -150,6 +150,7 @@ UnitTestSuite("Non-generic DataFrames"):
     check df.count() == 5
     check df.filter(p => p.name.startsWith("B")).count() == 2
     check df.map(p => p.age).max() == 58
+    # TODO: test with multiple separators
 
 
 UnitTestSuite("Indexed Transformations"):
