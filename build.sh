@@ -7,9 +7,12 @@ file=tests/all.nim
 fileAbs=`readlink -m $file`
 traceback=false
 
+optargs=""
+#optargs="-d:checkMacros"
+
 cd `dirname $0`
 mkdir -p bin
-nim c -o:./bin/tests --parallelBuild:1 -d:testNimData -d:release $file
+nim c -o:./bin/tests --parallelBuild:1 -d:testNimData -d:release $optargs $file
 
 compiler_exit=$?
 
