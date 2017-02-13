@@ -2,7 +2,7 @@
 name          = "NimData"
 version       = "0.1.0"
 author        = "Fabian Keller"
-description   = "(PROTOTYPE) DataFrame API in Nim"
+description   = "DataFrame API enabling fast out-of-core data analytics"
 license       = "MIT"
 
 srcDir=src

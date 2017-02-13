@@ -1,5 +1,9 @@
 # NimData
 
+[![nimble](https://raw.githubusercontent.com/yglukhov/nimble-tag/master/nimble.png)](https://github.com/yglukhov/nimble-tag)
+[![Build Status](https://travis-ci.org/bluenote10/NimData.svg?branch=master)](https://travis-ci.org/bluenote10/NimData)
+[![license](https://img.shields.io/github/license/mashape/apistatus.svg)]()
+
 Prototype of a DataFrame API in Nim, enabling fast out-of-core data processing.
 
 NimData is inspired by frameworks like Pandas/Spark/Flink/Thrill,
