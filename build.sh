@@ -1,8 +1,17 @@
 #!/bin/bash
 
-file=tests/all.nim
-#file=examples/example_01.nim
-#file=benchmarks/NimData/basic_tests.nim
+if [ -z "$1" ] ; then
+  file=tests/all.nim
+elif [ "$1" == "examples" ]; then
+  file=examples/example_01.nim
+elif [ "$1" == "benchmarks" ]; then
+  file=benchmarks/NimData/basic_tests.nim
+else
+  echo "Unknown mode"
+  exit 1
+fi
+
+echo "Compiling: $file"
 
 fileAbs=`readlink -m $file`
 traceback=false
@@ -25,7 +34,8 @@ fi
 
 if [ "$traceback" = true ] ; then
   echo -e "\nRunning ./koch temp c $fileAbs"
-  cd ~/bin/nim-repo
-  ./koch temp c `readlink -m $fileAbs`
+  nim_repo=`which nim | xargs readlink -f | xargs dirname | xargs dirname`
+  cd "$nim_repo"
+  ./koch temp c "$fileAbs"
 fi
 

@@ -3,11 +3,11 @@
 clear
 
 while true; do
-  ./build.sh
+  ./build.sh $1
 
   change=$(inotifywait -r -e close_write,moved_to,create,modify . \
     --exclude 'src/main$|nimchange|#.*' \
-    2> /dev/null) 
+    2> /dev/null)
 
   # very short sleep to avoid "text file busy"
   sleep 0.01
