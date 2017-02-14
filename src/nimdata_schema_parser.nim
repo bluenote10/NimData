@@ -33,8 +33,32 @@ template skipOverWhitespace*(s: untyped, i: untyped) =
     i += 1
 
 
+macro schemaType*(schema: static[openarray[Column]]): untyped =
+  ## Creates a type corresponding to a given schema (the return
+  ## type of the generated ``schemaParser`` proc).
+  result = newNimNode(nnkTupleTy)
+  for col in schema:
+    # TODO: This can probably done using true types + type.getType.name
+    let typ = case col.kind
+      of StrCol: "string"
+      of IntCol: "int64"
+      of FloatCol: "float"
+    result.add(
+      newIdentDefs(name = newIdentNode(col.name), kind = ident(typ))
+    )
+
+
 macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyped =
+  ## Creates a schema parser proc, which takes a ``string`` as input and
+  ## returns a the parsing result as a tuple, with types corresponding to
+  ## the given ``schema``
   # Adding `extraArgs: varargs[untyped]` doesn't seem to work :(
+
+  # TODO: Why can't I just use:
+  # var returnType = schemaType(schema)
+  # /home/fabian/github/NimData/src/nimdata_schema_parser.nim(58, 30) Error: type mismatch: got (openarray[Column])
+  # but expected one of:
+  # macro schemaType[](schema: static[openArray[Column]]): untyped
 
   var returnType = newNimNode(nnkTupleTy)
   for col in schema:

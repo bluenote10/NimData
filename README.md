@@ -169,7 +169,7 @@ Other filter-like transformation are:
 
 - `take`, which takes the first N records as already seen.
 - `drop`, which discard the first N records.
-- `filterWithIndex`. which allows to define a filter function that take both the index and the elements as input.
+- `filterWithIndex`, which allows to define a filter function that take both the index and the elements as input.
 
 ### Collecting data
 

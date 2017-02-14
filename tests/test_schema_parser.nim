@@ -2,6 +2,7 @@ import future
 import strutils
 import math
 
+import nimdata
 import nimdata_utils
 import nimdata_schema_parser
 
@@ -41,6 +42,23 @@ UnitTestSuite("Schema Parser"):
     skipPastSep(s, i, hitEnd, ';')
     check i == s.len
     check hitEnd == true
+
+  test "Schema type definition":
+    const schema = [
+      col(StrCol, "columnA"),
+      col(IntCol, "columnB"),
+      col(FloatCol, "columnC"),
+    ]
+    type
+      MyType = schemaType(schema)
+    let parser = schemaParser(schema, ';')
+    let result: MyType = parser("1;2;3.5")
+    proc filterFunc(x: MyType): bool = x.columnA == "1"
+    check:
+      DF.fromSeq(@["1;2;3.5"])
+        .map(parser)
+        .filter(filterFunc)
+        .count() == 1
 
   test "Mixed columns":
     const schema = [
