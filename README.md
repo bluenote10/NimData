@@ -1,4 +1,4 @@
-# NimData  [![Build Status](https://travis-ci.org/bluenote10/NimData.svg?branch=master)](https://travis-ci.org/bluenote10/NimData) [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](LICENSE) <a href="https://github.com/yglukhov/nimble-tag"><img src="https://raw.githubusercontent.com/yglukhov/nimble-tag/master/nimble.png" height="22" ></a>
+# NimData  [![Build Status](https://travis-ci.org/bluenote10/NimData.svg?branch=master)](https://travis-ci.org/bluenote10/NimData) [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](LICENSE) <a href="https://github.com/yglukhov/nimble-tag"><img src="https://raw.githubusercontent.com/yglukhov/nimble-tag/master/nimble.png" height="23" ></a>
 
 DataFrame API in Nim, enabling fast out-of-core data processing.
 
@@ -24,7 +24,7 @@ For a complete reference of the supported operations in NimData refer to the
 [module docs](https://bluenote10.github.io/NimData/nimdata.html).
 
 The following tutorial will give a brief introduction of the main
-functionality based on [this](examples/Bundesliga.csv)) German soccer data set.
+functionality based on [this](examples/Bundesliga.csv) German soccer data set.
 
 ### Reading raw text data
 
@@ -32,7 +32,6 @@ To create a data frame which simply iterates over the raw text content
 of a file, we can use `DF.fromFile`:
 
 ```nimrod
-# Load a raw CSV text file.
 let dfRawText = DF.fromFile("examples/Bundesliga.csv")
 ```
 
@@ -41,7 +40,6 @@ The type of the `dfRawText` is a plain `DataFrame[string]`.
 We can still perform some initial checks on it:
 
 ```nimrod
-# Check number of rows:
 echo dfRawText.count()
 # => 14018
 ```
@@ -66,10 +64,24 @@ Each action call results in the file being read from scratch.
 
 ### Type-safe schema parsing
 
+Now let's parse the CSV into type-safe tuple objects using `map`.
+The price for achieving compile time safety is that the schema
+has to be specified once for the compiler.
+Fortunately, Nim's meta programming capabilities make this very
+straightforward. The following example uses the `schemaParser`
+macro. This macro automatically generates a parsing function,
+which takes a `string` as input and returns a type-safe tuple
+with fields corresponding to the `schema` definition.
+
+Since our data set is small and we want to perform multiple operations on it,
+it makes sense to persist the parsing result into memory.
+This can be done by using `cache()` method.
+As a result, all operations performed on `df` will not have to re-read
+the file, but read the already parsed data from memory.
+_Spark users note_: In contrast to Spark, `cache()` is currently implemented
+as an action.
+
 ```nimrod
-# Now let's parse the CSV into typesafe tuple objects using `map`. Since
-# our data set is small and we want to perform multiple operations on it,
-# it makes sense to load the parsing result into memory by using `cache`.
 const schema = [
   col(StrCol, "index"),
   col(StrCol, "homeTeam"),
@@ -78,17 +90,19 @@ const schema = [
   col(IntCol, "awayGoals"),
   col(IntCol, "round"),
   col(IntCol, "year"),
-  col(StrCol, "date") # TODO: proper timestamp parsing
+  col(StrCol, "date") # proper timestamp parsing coming soon
 ]
-let df = DF.fromFile("examples/Bundesliga.csv")
-           .map(schemaParser(schema, ','))
-           .cache()
+let df = dfRawText.map(schemaParser(schema, ','))
+                  .cache()
+```
 
-# Check number of rows again
+We can perform the same checks as before, but this time the data frame
+contains the parsed tuples:
+
+```nimrod
 echo df.count()
 # => 14018
 
-# Show first 5 records; records are now a type safe tuple object.
 df.take(5).forEach(echoGeneric)
 # =>
 # (index: "1", homeTeam: "Werder Bremen", awayTeam: "Borussia Dortmund", homeGoals: 3, awayGoals: 2, round: 1, year: 1963, date: 1963-08-24 09:30:00)
@@ -96,20 +110,24 @@ df.take(5).forEach(echoGeneric)
 # (index: "3", homeTeam: "Preussen Muenster", awayTeam: "Hamburger SV", homeGoals: 1, awayGoals: 1, round: 1, year: 1963, date: 1963-08-24 09:30:00)
 # (index: "4", homeTeam: "Eintracht Frankfurt", awayTeam: "1. FC Kaiserslautern", homeGoals: 1, awayGoals: 1, round: 1, year: 1963, date: 1963-08-24 09:30:00)
 # (index: "5", homeTeam: "Karlsruher SC", awayTeam: "Meidericher SV", homeGoals: 1, awayGoals: 4, round: 1, year: 1963, date: 1963-08-24 09:30:00)
+```
 
-# Note that it is always possible to write the entire pipeline as follows
-# (will read the file from scratch):
+Note that instead of starting the pipeline from `dfRawText` and using
+caching, we could always write the pipeline from scratch:
+
+```nimrod
 DF.fromFile("examples/Bundesliga.csv")
   .map(schemaParser(schema, ','))
   .take(5)
   .forEach(echoGeneric)
 ```
 
-### Simple transformations: map and filter
+### Simple transformations: filter
+
+Data can be filtered by using `filter`. For instance, we can filter the data to get games
+of a certain team only:
 
 ```nimrod
-# Data can be filtered by using `filter`, which can be used to get games
-# of a certain team...
 df.filter(record =>
     record.homeTeam.contains("Freiburg") or
     record.awayTeam.contains("Freiburg")
@@ -122,8 +140,11 @@ df.filter(record =>
 # (index: "9147", homeTeam: "Borussia Dortmund", awayTeam: "SC Freiburg", homeGoals: 3, awayGoals: 2, round: 3, year: 1993, date: 1993-08-21 08:30:00)
 # (index: "9150", homeTeam: "SC Freiburg", awayTeam: "Hamburger SV", homeGoals: 0, awayGoals: 1, round: 4, year: 1993, date: 1993-08-27 12:30:00)
 # (index: "9164", homeTeam: "1. FC Koeln", awayTeam: "SC Freiburg", homeGoals: 2, awayGoals: 0, round: 5, year: 1993, date: 1993-09-01 12:30:00)
+```
 
-# ... or e.g. games with many home goals:
+Or search for games with many home goals:
+
+```nimrod
 df.filter(record => record.homeGoals >= 10)
   .forEach(echoGeneric)
 # =>
@@ -133,22 +154,41 @@ df.filter(record => record.homeGoals >= 10)
 # (index: "4457", homeTeam: "Borussia Moenchengladbach", awayTeam: "Borussia Dortmund", homeGoals: 12, awayGoals: 0, round: 34, year: 1977, date: 1978-04-29 08:30:00)
 # (index: "5788", homeTeam: "Borussia Dortmund", awayTeam: "Arminia Bielefeld", homeGoals: 11, awayGoals: 1, round: 12, year: 1982, date: 1982-11-06 08:30:00)
 # (index: "6364", homeTeam: "Borussia Moenchengladbach", awayTeam: "Eintracht Braunschweig", homeGoals: 10, awayGoals: 0, round: 8, year: 1984, date: 1984-10-11 14:00:00)
+```
 
-# A DataFrame[T] can be converted easily into seq[T] (Nim's native dynamic
-# arrays) by using `collect`.
-let manyGoalsVector = df
-  .map(record => record.homeGoals)
-  .filter(goals => goals >= 10)
-  .collect()
-echo manyGoalsVector
+Note that we can now fully benefit from type-safety:
+The compiler knows the exact fields and types of a record.
+No dynamic field lookup and/or type casting is required.
+Assumptions about the data structure are moved to the earliest
+possible step in the pipeline, allowing to fail early if they
+are wrong. After transitioning into the type-safe domain, the
+compiler helps to verify the correctness of even long processing
+pipelines, reducing the risk of runtime errors.
+
+Other filter-like transformation are:
+
+- `take`, which takes the first N records as already seen.
+- `drop`, which discard the first N records.
+- `filterWithIndex`. which allows to define a filter function that take both the index and the elements as input.
+
+### Collecting data
+
+A `DataFrame[T]` can be converted easily into a `seq[T]` (Nim's native dynamic
+arrays) by using `collect`:
+
+```nimrod
+echo df.map(record => record.homeGoals)
+       .filter(goals => goals >= 10)
+       .collect()
 # => @[11, 10, 11, 12, 11, 10]
 ```
 
 ### Numerical aggregation
 
+A DataFrame of a numerical type allows to use functions like `min`/`max`/`mean`.
+This allows to get things like:
+
 ```nimrod
-# A DataFrame of a numerical type allows to use functions like min/max/mean.
-# This allows to get things like:
 echo "Min date: ", df.map(record => record.year).min()
 echo "Max date: ", df.map(record => record.year).max()
 echo "Average home goals: ", df.map(record => record.homeGoals).mean()
