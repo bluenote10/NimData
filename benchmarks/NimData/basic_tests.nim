@@ -48,11 +48,11 @@ proc parserGeneratedV02*(s: string): tuple[floatA: float, floatB: float, intA: i
   var i = 0
   var reachedEnd = false
   i += parseBiggestFloat(s, result.floatA, start=i)
-  skipToSep(s, i, reachedEnd, ',')
+  skipPastSep(s, i, reachedEnd, ',')
   i += parseBiggestFloat(s, result.floatB, start=i)
-  skipToSep(s, i, reachedEnd, ',')
+  skipPastSep(s, i, reachedEnd, ',')
   i += parseBiggestInt(s, result.intA, start=i)
-  skipToSep(s, i, reachedEnd, ',')
+  skipPastSep(s, i, reachedEnd, ',')
   i += parseBiggestInt(s, result.intB, start=i)
 
 

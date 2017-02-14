@@ -1,6 +1,7 @@
 import macros
 
 import strutils
+import parseutils
 
 type
   ColKind* = enum
@@ -19,57 +20,91 @@ proc col*(kind: ColKind, name: string): Column =
   Column(kind: kind, name: name)
 
 
+template skipPastSep*(s: untyped, i: untyped, hitEnd: untyped, sep: char) =
+  while s[i] != sep and i < s.len:
+    i += 1
+  if i == s.len:
+    hitEnd = true
+  else:
+    i += 1
+
+template skipOverWhitespace*(s: untyped, i: untyped) =
+  while (s[i] == ' ' or s[i] == '\t') and i < s.len:
+    i += 1
+
+
 macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyped =
-  # Doesn't seem to work to add: extraArgs: varargs[untyped]
-  # echo "extraArgs: ", extraArgs.treerepr
+  # Adding `extraArgs: varargs[untyped]` doesn't seem to work :(
 
   var returnType = newNimNode(nnkTupleTy)
   for col in schema:
     # TODO: This can probably done using true types + type.getType.name
     let typ = case col.kind
       of StrCol: "string"
-      of IntCol: "int"
+      of IntCol: "int64"
       of FloatCol: "float"
     returnType.add(
       newIdentDefs(name = newIdentNode(col.name), kind = ident(typ))
     )
   when defined(checkMacros):
-    echo returnType.treeRepr
+    #echo returnType.treeRepr
     echo returnType.repr
 
-  when defined(checkMacros):
-    let test = quote do:
-      let example2 = proc (s: string): tuple[A: int, B: int, C: float] =
-        let fields = s.split(";")
-        result.A = parseInt(fields[0])
-        result.B = parseInt(fields[1])
-        result.C = parseFloat(fields[2])
-    echo test.treerepr
-    echo test.repr
+  template fragmentSkipPastSep(sep: char) =
+    skipPastSep(s, i, hitEnd, sep)
 
-  let fieldsIdent = ident("fields")
-  let expectedFields = newIntLitNode(schema.len)
-  let sepIdent = newLit(sep)
-  var body = quote do:
-    let `fieldsIdent` = s.split(`sepIdent`)
-    if `fieldsIdent`.len != `expectedFields`:
-      raise newException(IOError, "Unexpected number of fields")
+  template fragmentReadStr(field: untyped, sep: char) =
+    ## read string
+    copyFrom = i
+    skipPastSep(s, i, hitEnd, sep)
+    if not hitEnd:
+      field = substr(s, copyFrom, i-2)
+    else:
+      field = substr(s, copyFrom, s.len)
+
+  template fragmentReadInt(field: untyped) =
+    ## read int
+    i += parseBiggestInt(s, field, start=i)
+
+  template fragmentReadFloat(field: untyped) =
+    ## read float
+    skipOverWhitespace(s, i)
+    i += parseBiggestFloat(s, field, start=i)
+
+  template bodyHeader() {.dirty.} =
+    var i = 0
+    var hitEnd = false
+    var copyFrom = 0
+
+  var body = getAst(bodyHeader())
 
   for i, col in schema.pairs:
-    let ass_rhs = case col.kind
-      of StrCol:
-        newNimNode(nnkBracketExpr).add(ident("fields"), newIntLitNode(i))
-      of IntCol:
-        let parserFunc = bindSym("parseInt")
-        newCall(parserFunc, newNimNode(nnkBracketExpr).add(ident("fields"), newIntLitNode(i)))
-      of FloatCol:
-        let parserFunc = bindSym("parseFloat")
-        newCall(parserFunc, newNimNode(nnkBracketExpr).add(ident("fields"), newIntLitNode(i)))
-    let ass_lhs = newDotExpr(ident("result"), ident(col.name))
-    body.add(newAssignment(ass_lhs, ass_rhs))
-  when defined(checkMacros):
-    echo body.treeRepr
-    echo body.repr
+
+    let fieldExpr = newDotExpr(ident("result"), ident(col.name)) # the `result.columnBlah` expression
+    let sepExpr = newLit(sep)
+
+    var requiresAdvancePastSep = true
+
+    case col.kind
+    of StrCol:
+      let call = getAst(fragmentReadStr(fieldExpr, sepExpr))
+      body.add(call)
+      # for a StrCol we don't need the call to fragmentSkipPastSep, because
+      # the string extraction already advances past the separator
+      requiresAdvancePastSep = false
+    of IntCol:
+      let call = getAst(fragmentReadInt(fieldExpr))
+      body.add(call)
+      requiresAdvancePastSep = true
+    of FloatCol:
+      let call = getAst(fragmentReadFloat(fieldExpr))
+      body.add(call)
+      requiresAdvancePastSep = true
+
+    # If it is not the last column and dvancing past sep is required
+    if requiresAdvancePastSep and i < schema.len - 1:
+      let call = getAst(fragmentSkipPastSep(sepExpr))
+      body.add(call)
 
   let params = [
     returnType,
@@ -77,6 +112,6 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
   ]
   result = newProc(params=params, body=body, procType=nnkLambda)
   when defined(checkMacros):
-    echo result.treerepr
+    #echo result.treerepr
     echo result.repr
 

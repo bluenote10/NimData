@@ -1,4 +1,37 @@
 import macros
+import strutils
+
+
+# Inspired by Jehan's forum post
+proc `|`*(s: string, d: int): string =
+  if s.len < d.abs:
+    let pad = spaces(d.abs - s.len)
+    if d >= 0:
+      result = pad & s
+    else:
+      result = s & pad
+  else:
+    result = s
+
+proc `|`*(x: int, d: int): string =
+  result = $x
+  let pad = spaces(d.abs - result.len)
+  if d >= 0:
+    result = pad & result
+  else:
+    result = result & pad
+
+proc `|`*(f: float, d: tuple[w, p: int]): string =
+  result = formatFloat(f, ffDecimal, d.p)
+  let pad = spaces(d.w.abs - result.len)
+  if d.w >= 0:
+    result = pad & result
+  else:
+    result = result & pad
+
+proc `|`*(f: float, d: int): string =
+  $f | d
+
 
 macro debug*(n: varargs[typed]): untyped =
   # `n` is a Nim AST that contains the whole macro invocation
