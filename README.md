@@ -1,8 +1,6 @@
-# NimData  [![Build Status](https://travis-ci.org/bluenote10/NimData.svg?branch=master)](https://travis-ci.org/bluenote10/NimData) [![license](https://img.shields.io/github/license/mashape/apistatus.svg)]()
+# NimData  [![Build Status](https://travis-ci.org/bluenote10/NimData.svg?branch=master)](https://travis-ci.org/bluenote10/NimData) [![license](https://img.shields.io/github/license/mashape/apistatus.svg)]() [![nimble](https://raw.githubusercontent.com/yglukhov/nimble-tag/master/nimble.png)](https://github.com/yglukhov/nimble-tag)
 
-[![nimble](https://raw.githubusercontent.com/yglukhov/nimble-tag/master/nimble.png)](https://github.com/yglukhov/nimble-tag)
-
-Prototype of a DataFrame API in Nim, enabling fast out-of-core data processing.
+DataFrame API in Nim, enabling fast out-of-core data processing.
 
 NimData is inspired by frameworks like Pandas/Spark/Flink/Thrill,
 and sits between the Pandas and the Spark/Flink/Thrill side.
@@ -125,6 +123,26 @@ df.filter(record => (record.homeGoals - record.awayGoals) == maxDiff)
 ## Documentation
 
 See [module docs](https://bluenote10.github.io/NimData/nimdata.html).
+
+## Installation (for users new to Nim)
+
+NimData requires to have Nim installed. On systems where a C compiler and git is available,
+the best method is to [compile Nim](https://github.com/nim-lang/nim#compiling) from
+the GitHub sources. Modern versions of Nim include Nimble (Nim's package manager),
+so installing NimData becomes:
+
+    $ nimble install NimData
+
+This will download the NimData source from GitHub and put it in `~/.nimble/pkgs`.
+A minimal NimData program would look like:
+
+```nim
+import nimdata
+
+echo DF.fromRange(0, 10).collect()
+```
+
+To compile and run the program use `nim -r c test.nim` (`c` for compile, and `-r` to run directly after compilation).
 
 ## Next steps
 
