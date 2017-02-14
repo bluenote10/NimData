@@ -1,4 +1,4 @@
-# NimData  [![Build Status](https://travis-ci.org/bluenote10/NimData.svg?branch=master)](https://travis-ci.org/bluenote10/NimData) [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](LICENSE) <a href="https://github.com/yglukhov/nimble-tag"><img src="https://raw.githubusercontent.com/yglukhov/nimble-tag/master/nimble.png" align="left" height="22" ></a>
+# NimData  [![Build Status](https://travis-ci.org/bluenote10/NimData.svg?branch=master)](https://travis-ci.org/bluenote10/NimData) [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](LICENSE) <a href="https://github.com/yglukhov/nimble-tag"><img src="https://raw.githubusercontent.com/yglukhov/nimble-tag/master/nimble.png" height="22" ></a>
 
 DataFrame API in Nim, enabling fast out-of-core data processing.
 
@@ -28,7 +28,7 @@ functionality based on [this](examples/Bundesliga.csv)) German soccer data set.
 
 ### Reading raw text data
 
-To create a data frame, which simply iterates over the raw text content
+To create a data frame which simply iterates over the raw text content
 of a file, we can use `DF.fromFile`:
 
 ```nimrod
@@ -38,7 +38,7 @@ let dfRawText = DF.fromFile("examples/Bundesliga.csv")
 
 The operation is lazy, so nothing happens so far.
 The type of the `dfRawText` is a plain `DataFrame[string]`.
-We can still perform some initial check on it:
+We can still perform some initial checks on it:
 
 ```nimrod
 # Check number of rows:
