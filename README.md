@@ -1,4 +1,4 @@
-# NimData  [![Build Status](https://travis-ci.org/bluenote10/NimData.svg?branch=master)](https://travis-ci.org/bluenote10/NimData) [![license](https://img.shields.io/github/license/mashape/apistatus.svg)]() [![nimble](https://raw.githubusercontent.com/yglukhov/nimble-tag/master/nimble.png)](https://github.com/yglukhov/nimble-tag)
+# NimData  [![Build Status](https://travis-ci.org/bluenote10/NimData.svg?branch=master)](https://travis-ci.org/bluenote10/NimData) [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](LICENSE) <a href="https://github.com/yglukhov/nimble-tag"><img src="https://raw.githubusercontent.com/yglukhov/nimble-tag/master/nimble.png" align="left" height="22" ></a>
 
 DataFrame API in Nim, enabling fast out-of-core data processing.
 
@@ -8,18 +8,51 @@ Similar to Pandas, NimData is currently non-distributed,
 but shares the type-safe, lazy API of Spark/Flink/Thrill.
 Thanks to Nim, it enables elegant out-of-core processing at native speed.
 
-Allows to write code like (example based on this [German soccer data set](examples/Bundesliga.csv)):
+## Documentation
+
+NimData's core data type is a generic `DataFrame[T]`. The methods
+of a data frame can be categorized into generalizations
+of the Map/Reduce concept:
+
+- **Transformations**: Operations like `map` or `filter` transform one data
+frame into another. Transformations are lazy and can be chained. They will only
+be executed once an action is called.
+- **Actions**: Operations like `count`, `min`, `max`, `sum`, `reduce`, `fold`, or `collect`
+perform an aggregation of a data frame, and trigger the processing pipeline.
+
+For a complete reference of the supported operations in NimData refer to the
+[module docs](https://bluenote10.github.io/NimData/nimdata.html).
+
+The following tutorial will give a brief introduction of the main
+functionality based on [this](examples/Bundesliga.csv)) German soccer data set.
+
+### Reading raw text data
+
+To create a data frame, which simply iterates over the raw text content
+of a file, we can use `DF.fromFile`:
 
 ```nimrod
-# Load a raw CSV text file. No parsing is done here yet, this is basically
-# just an iterator over rows of type string:
+# Load a raw CSV text file.
 let dfRawText = DF.fromFile("examples/Bundesliga.csv")
+```
 
+The operation is lazy, so nothing happens so far.
+The type of the `dfRawText` is a plain `DataFrame[string]`.
+We can still perform some initial check on it:
+
+```nimrod
 # Check number of rows:
 echo dfRawText.count()
 # => 14018
+```
 
-# Show first 5 rows:
+The `count()` method is an action, which triggers the line-by-line reading of the
+file, returning the number of rows. We can re-use `dfRawText` with different
+transformations/actions. The following would filter the file to the first
+5 rows and perform a `forEach` action to print the records.
+
+
+```nimrod
 dfRawText.take(5).forEach(echoGeneric)
 # =>
 # "1","Werder Bremen","Borussia Dortmund",3,2,1,1963,1963-08-24 09:30:00
@@ -27,7 +60,13 @@ dfRawText.take(5).forEach(echoGeneric)
 # "3","Preussen Muenster","Hamburger SV",1,1,1,1963,1963-08-24 09:30:00
 # "4","Eintracht Frankfurt","1. FC Kaiserslautern",1,1,1,1963,1963-08-24 09:30:00
 # "5","Karlsruher SC","Meidericher SV",1,4,1,1963,1963-08-24 09:30:00
+```
 
+Each action call results in the file being read from scratch.
+
+### Type-safe schema parsing
+
+```nimrod
 # Now let's parse the CSV into typesafe tuple objects using `map`. Since
 # our data set is small and we want to perform multiple operations on it,
 # it makes sense to load the parsing result into memory by using `cache`.
@@ -64,7 +103,11 @@ DF.fromFile("examples/Bundesliga.csv")
   .map(schemaParser(schema, ','))
   .take(5)
   .forEach(echoGeneric)
+```
 
+### Simple transformations: map and filter
+
+```nimrod
 # Data can be filtered by using `filter`, which can be used to get games
 # of a certain team...
 df.filter(record =>
@@ -99,7 +142,11 @@ let manyGoalsVector = df
   .collect()
 echo manyGoalsVector
 # => @[11, 10, 11, 12, 11, 10]
+```
 
+### Numerical aggregation
+
+```nimrod
 # A DataFrame of a numerical type allows to use functions like min/max/mean.
 # This allows to get things like:
 echo "Min date: ", df.map(record => record.year).min()
@@ -119,10 +166,6 @@ df.filter(record => (record.homeGoals - record.awayGoals) == maxDiff)
 # =>
 # (index: "4457", homeTeam: "Borussia Moenchengladbach", awayTeam: "Borussia Dortmund", homeGoals: 12, awayGoals: 0, round: 34, year: 1977, date: 1978-04-29 08:30:00)
 ```
-
-## Documentation
-
-See [module docs](https://bluenote10.github.io/NimData/nimdata.html).
 
 ## Installation (for users new to Nim)
 
