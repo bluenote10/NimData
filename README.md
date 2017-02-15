@@ -126,7 +126,7 @@ DF.fromFile("examples/Bundesliga.csv")
   .show()
 ```
 
-### Simple transformations: filter
+### Filter
 
 Data can be filtered by using `filter`. For instance, we can filter the data to get games
 of a certain team only:

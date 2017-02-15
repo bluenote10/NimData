@@ -9,6 +9,8 @@ import nimdata_utils
 
 import test_schema_parser
 
+{.push hints: off.}
+#{.push hint[XDeclaredButNotUsed]: off.}
 
 UnitTestSuite("CachedDataFrame"):
   test "Construction from seq":
