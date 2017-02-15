@@ -72,14 +72,14 @@ proc example02*() =
   echo df.count()
 
   # Show first 5 records; records are now a type safe tuple object.
-  df.take(5).forEach(echoGeneric)
+  df.take(5).show()
 
   # Note that it is always possible to write the entire pipeline as follows
   # (will read the file from scratch):
   DF.fromFile("examples/Bundesliga.csv")
     .map(schemaParser(schema, ','))
     .take(5)
-    .forEach(echoGeneric)
+    .show()
 
   # Data can be filtered by using `filter`, which can be used to get games
   # of a certain team...
@@ -88,11 +88,11 @@ proc example02*() =
       record.awayTeam.contains("Freiburg")
     )
     .take(5)
-    .forEach(echoGeneric)
+    .show()
 
   # ... or e.g. games with many home goals:
   df.filter(record => record.homeGoals >= 10)
-    .forEach(echoGeneric)
+    .show()
 
   # A DataFrame[T] can be converted easily into seq[T] (Nim's native dynamic
   # arrays) by using `collect`.
@@ -112,7 +112,7 @@ proc example02*() =
   # Let's find the highest defeat
   let maxDiff = df.map(record => (record.homeGoals - record.awayGoals).abs).max()
   df.filter(record => (record.homeGoals - record.awayGoals) == maxDiff)
-    .forEach(echoGeneric)
+    .show()
 
 
 when isMainModule:

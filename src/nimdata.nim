@@ -4,6 +4,7 @@ import macros
 
 import strutils
 import sequtils
+import streams
 
 import random
 import sets
@@ -18,6 +19,7 @@ export nimdata_schema_parser.col
 export nimdata_schema_parser.schema_parser
 
 import nimdata_html
+import nimdata_utils
 
 type
   DataFrame*[T] = ref object of RootObj
@@ -208,6 +210,65 @@ method collect*[T](df: CachedDataFrame[T]): seq[T] =
 proc echoGeneric*[T](x: T) {.procvar.} =
   ## Convenience to allow ``df.forEach(echoGeneric)``
   echo x
+
+proc show*[T: not tuple](df: DataFrame[T], s: Stream = newFileStream(stdout)) =
+  proc print(x: T) =
+    s.writeLine(x)
+  df.forEach(print)
+
+proc separatorRowIntercepted(sizes: seq[int], interceptor: char): string =
+  result = newStringOfCap(30)
+  result &= interceptor
+  for i, size in sizes.pairs:
+    result &= '-'.repeat(size + 2)
+    result &= interceptor
+
+proc show*[T: tuple](df: DataFrame[T], s: Stream = newFileStream(stdout)) =
+  var dummy: T
+  var i = 0
+  let fields = getFields(T)
+  let sizes = 10.repeat(fields.len)
+
+  s.writeLine(separatorRowIntercepted(sizes, '+'))
+
+  var totalLineWidth = 0
+  for field, value in dummy.fieldPairs:
+    if i == 0:
+      s.write("| ")
+      totalLineWidth += 2
+    else:
+      s.write(" | ")
+      totalLineWidth += 3
+    when value is string:
+      let strFormatted = field | -sizes[i]
+    else:
+      let strFormatted = field | +sizes[i]
+    s.write(fixedTruncateR(strFormatted, sizes[i]))
+    totalLineWidth += sizes[i]
+    i += 1
+  s.write(" |\n")
+  totalLineWidth += 2
+
+  s.writeLine(separatorRowIntercepted(sizes, '+'))
+
+  let it = df.iter()
+  for x in it():
+    i = 0
+    for field, value in x.fieldPairs():
+      if i == 0:
+        s.write("| ")
+      else:
+        s.write(" | ")
+      when value is string:
+        let strFormatted = value | -sizes[i]
+      else:
+        let strFormatted = $value | +sizes[i]
+      s.write(fixedTruncateR(strFormatted, sizes[i]))
+      i += 1
+    s.write(" |\n")
+
+  s.writeLine(separatorRowIntercepted(sizes, '+'))
+
 
 # -----------------------------------------------------------------------------
 # Actions (numerical)
