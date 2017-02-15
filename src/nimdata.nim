@@ -212,6 +212,8 @@ proc echoGeneric*[T](x: T) {.procvar.} =
   echo x
 
 proc show*[T: not tuple](df: DataFrame[T], s: Stream = newFileStream(stdout)) =
+  ## Prints the content of the data frame using generic to string conversion.
+  ## If no stream is specified, the output is written to ``stdout``.
   proc print(x: T) =
     s.writeLine(x)
   df.forEach(print)
@@ -224,6 +226,8 @@ proc separatorRowIntercepted(sizes: seq[int], interceptor: char): string =
     result &= interceptor
 
 proc show*[T: tuple](df: DataFrame[T], s: Stream = newFileStream(stdout)) =
+  ## Prints the content of the data frame in the form of an ASCII table.
+  ## If no stream is specified, the output is written to ``stdout``.
   var dummy: T
   var i = 0
   let fields = getFields(T)

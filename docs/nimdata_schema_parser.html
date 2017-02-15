@@ -1243,8 +1243,20 @@ function main() {
 <li>
   <a class="reference reference-toplevel" href="#16" id="66">Macros</a>
   <ul class="simple simple-toc-section">
-      <li><a class="reference" href="#schemaParser.m,,"
+      <li><a class="reference" href="#schemaType.m,"
+    title="schemaType[](schema: static[openArray[Column]]): untyped"><wbr />schema<wbr />Type<span class="attachedType" style="visibility:hidden">Column</span></a></li>
+  <li><a class="reference" href="#schemaParser.m,,"
     title="schemaParser[](schema: static[openArray[Column]]; sep: static[char]): untyped"><wbr />schema<wbr />Parser<span class="attachedType" style="visibility:hidden">Column</span></a></li>
+
+  </ul>
+</li>
+<li>
+  <a class="reference reference-toplevel" href="#17" id="67">Templates</a>
+  <ul class="simple simple-toc-section">
+      <li><a class="reference" href="#skipPastSep.t,untyped,untyped,untyped,char"
+    title="skipPastSep(s: untyped; i: untyped; hitEnd: untyped; sep: char)"><wbr />skip<wbr />Past<wbr />Sep<span class="attachedType" style="visibility:hidden"></span></a></li>
+  <li><a class="reference" href="#skipOverWhitespace.t,untyped,untyped"
+    title="skipOverWhitespace(s: untyped; i: untyped)"><wbr />skip<wbr />Over<wbr />Whitespace<span class="attachedType" style="visibility:hidden"></span></a></li>
 
   </ul>
 </li>
@@ -1258,7 +1270,7 @@ function main() {
   <div class="section" id="6">
 <h1><a class="toc-backref" href="#6">Imports</a></h1>
 <dl class="item">
-<a class="reference external" href="macros.html">macros</a>, <a class="reference external" href="strutils.html">strutils</a>
+<a class="reference external" href="macros.html">macros</a>, <a class="reference external" href="strutils.html">strutils</a>, <a class="reference external" href="parseutils.html">parseutils</a>
 </dl></div>
 <div class="section" id="7">
 <h1><a class="toc-backref" href="#7">Types</a></h1>
@@ -1268,9 +1280,9 @@ function main() {
 <dd>
 
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata_schema_parser.nim#L6"
+href="/tree/master/src/nimdata_schema_parser.nim#L7"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata_schema_parser.nim#L6" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata_schema_parser.nim#L7" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <dt id="Column"><a name="Column"></a><pre><span class="Identifier">Column</span> <span class="Other">=</span> <span class="Keyword">object</span>
@@ -1286,9 +1298,9 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata_schema_parser.nim#L10"
+href="/tree/master/src/nimdata_schema_parser.nim#L11"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata_schema_parser.nim#L10" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata_schema_parser.nim#L11" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 
@@ -1300,9 +1312,9 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata_schema_parser.nim#L18"
+href="/tree/master/src/nimdata_schema_parser.nim#L19"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata_schema_parser.nim#L18" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata_schema_parser.nim#L19" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 
@@ -1310,13 +1322,45 @@ class="link-seesrc" target="_blank">Source</a>
 <div class="section" id="16">
 <h1><a class="toc-backref" href="#16">Macros</a></h1>
 <dl class="item">
+<dt id="schemaType"><a name="schemaType.m,"></a><pre><span class="Keyword">macro</span> <span class="Identifier">schemaType</span><span class="Other">[</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">schema</span><span class="Other">:</span> <span class="Keyword">static</span><span class="Other">[</span><span class="Identifier">openArray</span><span class="Other">[</span><span class="Identifier">Column</span><span class="Other">]</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">untyped</span></pre></dt>
+<dd>
+Creates a type corresponding to a given schema (the return type of the generated <tt class="docutils literal"><span class="pre">schemaParser</span></tt> proc).
+&nbsp;&nbsp;<a
+href="/tree/master/src/nimdata_schema_parser.nim#L36"
+class="link-seesrc" target="_blank">Source</a>
+<a href="/edit/devel/src/nimdata_schema_parser.nim#L36" class="link-seesrc" target="_blank" >Edit</a>
+
+</dd>
 <dt id="schemaParser"><a name="schemaParser.m,,"></a><pre><span class="Keyword">macro</span> <span class="Identifier">schemaParser</span><span class="Other">[</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">schema</span><span class="Other">:</span> <span class="Keyword">static</span><span class="Other">[</span><span class="Identifier">openArray</span><span class="Other">[</span><span class="Identifier">Column</span><span class="Other">]</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">sep</span><span class="Other">:</span> <span class="Keyword">static</span><span class="Other">[</span><span class="Identifier">char</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">untyped</span></pre></dt>
+<dd>
+Creates a schema parser proc, which takes a <tt class="docutils literal"><span class="pre">string</span></tt> as input and returns a the parsing result as a tuple, with types corresponding to the given <tt class="docutils literal"><span class="pre">schema</span></tt>
+&nbsp;&nbsp;<a
+href="/tree/master/src/nimdata_schema_parser.nim#L51"
+class="link-seesrc" target="_blank">Source</a>
+<a href="/edit/devel/src/nimdata_schema_parser.nim#L51" class="link-seesrc" target="_blank" >Edit</a>
+
+</dd>
+
+</dl></div>
+<div class="section" id="17">
+<h1><a class="toc-backref" href="#17">Templates</a></h1>
+<dl class="item">
+<dt id="skipPastSep"><a name="skipPastSep.t,untyped,untyped,untyped,char"></a><pre><span class="Keyword">template</span> <span class="Identifier">skipPastSep</span><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">untyped</span><span class="Other">;</span> <span class="Identifier">i</span><span class="Other">:</span> <span class="Identifier">untyped</span><span class="Other">;</span> <span class="Identifier">hitEnd</span><span class="Other">:</span> <span class="Identifier">untyped</span><span class="Other">;</span> <span class="Identifier">sep</span><span class="Other">:</span> <span class="Identifier">char</span><span class="Other">)</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata_schema_parser.nim#L22"
+href="/tree/master/src/nimdata_schema_parser.nim#L23"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata_schema_parser.nim#L22" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata_schema_parser.nim#L23" class="link-seesrc" target="_blank" >Edit</a>
+
+</dd>
+<dt id="skipOverWhitespace"><a name="skipOverWhitespace.t,untyped,untyped"></a><pre><span class="Keyword">template</span> <span class="Identifier">skipOverWhitespace</span><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">untyped</span><span class="Other">;</span> <span class="Identifier">i</span><span class="Other">:</span> <span class="Identifier">untyped</span><span class="Other">)</span></pre></dt>
+<dd>
+
+&nbsp;&nbsp;<a
+href="/tree/master/src/nimdata_schema_parser.nim#L31"
+class="link-seesrc" target="_blank">Source</a>
+<a href="/edit/devel/src/nimdata_schema_parser.nim#L31" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 
@@ -1329,7 +1373,7 @@ class="link-seesrc" target="_blank">Source</a>
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br/>
-        <small>Made with Nim. Generated: 2017-02-12 22:17:12 UTC</small>
+        <small>Made with Nim. Generated: 2017-02-15 22:41:39 UTC</small>
       </div>
     </div>
   </div>
