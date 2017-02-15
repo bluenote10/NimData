@@ -17,7 +17,7 @@ of the Map/Reduce concept:
 - **Transformations**: Operations like `map` or `filter` transform one data
 frame into another. Transformations are lazy and can be chained. They will only
 be executed once an action is called.
-- **Actions**: Operations like `count`, `min`, `max`, `sum`, `reduce`, `fold`, or `collect`
+- **Actions**: Operations like `count`, `min`, `max`, `sum`, `reduce`, `fold`, `collect`, or `show`
 perform an aggregation of a data frame, and trigger the processing pipeline.
 
 For a complete reference of the supported operations in NimData refer to the
@@ -47,11 +47,11 @@ echo dfRawText.count()
 The `count()` method is an action, which triggers the line-by-line reading of the
 file, returning the number of rows. We can re-use `dfRawText` with different
 transformations/actions. The following would filter the file to the first
-5 rows and perform a `forEach` action to print the records.
+5 rows and perform a `show` action to print the records.
 
 
 ```nimrod
-dfRawText.take(5).forEach(echoGeneric)
+dfRawText.take(5).show()
 # =>
 # "1","Werder Bremen","Borussia Dortmund",3,2,1,1963,1963-08-24 09:30:00
 # "2","Hertha BSC Berlin","1. FC Nuernberg",1,1,1,1963,1963-08-24 09:30:00
@@ -103,13 +103,17 @@ contains the parsed tuples:
 echo df.count()
 # => 14018
 
-df.take(5).forEach(echoGeneric)
+df.take(5).show()
 # =>
-# (index: "1", homeTeam: "Werder Bremen", awayTeam: "Borussia Dortmund", homeGoals: 3, awayGoals: 2, round: 1, year: 1963, date: 1963-08-24 09:30:00)
-# (index: "2", homeTeam: "Hertha BSC Berlin", awayTeam: "1. FC Nuernberg", homeGoals: 1, awayGoals: 1, round: 1, year: 1963, date: 1963-08-24 09:30:00)
-# (index: "3", homeTeam: "Preussen Muenster", awayTeam: "Hamburger SV", homeGoals: 1, awayGoals: 1, round: 1, year: 1963, date: 1963-08-24 09:30:00)
-# (index: "4", homeTeam: "Eintracht Frankfurt", awayTeam: "1. FC Kaiserslautern", homeGoals: 1, awayGoals: 1, round: 1, year: 1963, date: 1963-08-24 09:30:00)
-# (index: "5", homeTeam: "Karlsruher SC", awayTeam: "Meidericher SV", homeGoals: 1, awayGoals: 4, round: 1, year: 1963, date: 1963-08-24 09:30:00)
+# +------------+------------+------------+------------+------------+------------+------------+------------+
+# | index      | homeTeam   | awayTeam   |  homeGoals |  awayGoals |      round |       year | date       |
+# +------------+------------+------------+------------+------------+------------+------------+------------+
+# | "1"        | "Werder B… | "Borussia… |          3 |          2 |          1 |       1963 | 1963-08-2… |
+# | "2"        | "Hertha B… | "1. FC Nu… |          1 |          1 |          1 |       1963 | 1963-08-2… |
+# | "3"        | "Preussen… | "Hamburge… |          1 |          1 |          1 |       1963 | 1963-08-2… |
+# | "4"        | "Eintrach… | "1. FC Ka… |          1 |          1 |          1 |       1963 | 1963-08-2… |
+# | "5"        | "Karlsruh… | "Meideric… |          1 |          4 |          1 |       1963 | 1963-08-2… |
+# +------------+------------+------------+------------+------------+------------+------------+------------+
 ```
 
 Note that instead of starting the pipeline from `dfRawText` and using
@@ -119,7 +123,7 @@ caching, we could always write the pipeline from scratch:
 DF.fromFile("examples/Bundesliga.csv")
   .map(schemaParser(schema, ','))
   .take(5)
-  .forEach(echoGeneric)
+  .show()
 ```
 
 ### Simple transformations: filter
@@ -133,27 +137,35 @@ df.filter(record =>
     record.awayTeam.contains("Freiburg")
   )
   .take(5)
-  .forEach(echoGeneric)
+  .show()
 # =>
-# (index: "9128", homeTeam: "Bayern Muenchen", awayTeam: "SC Freiburg", homeGoals: 3, awayGoals: 1, round: 1, year: 1993, date: 1993-08-07 08:30:00)
-# (index: "9135", homeTeam: "SC Freiburg", awayTeam: "Wattenscheid 09", homeGoals: 4, awayGoals: 1, round: 2, year: 1993, date: 1993-08-14 08:30:00)
-# (index: "9147", homeTeam: "Borussia Dortmund", awayTeam: "SC Freiburg", homeGoals: 3, awayGoals: 2, round: 3, year: 1993, date: 1993-08-21 08:30:00)
-# (index: "9150", homeTeam: "SC Freiburg", awayTeam: "Hamburger SV", homeGoals: 0, awayGoals: 1, round: 4, year: 1993, date: 1993-08-27 12:30:00)
-# (index: "9164", homeTeam: "1. FC Koeln", awayTeam: "SC Freiburg", homeGoals: 2, awayGoals: 0, round: 5, year: 1993, date: 1993-09-01 12:30:00)
+# +------------+------------+------------+------------+------------+------------+------------+------------+
+# | index      | homeTeam   | awayTeam   |  homeGoals |  awayGoals |      round |       year | date       |
+# +------------+------------+------------+------------+------------+------------+------------+------------+
+# | "9128"     | "Bayern M… | "SC Freib… |          3 |          1 |          1 |       1993 | 1993-08-0… |
+# | "9135"     | "SC Freib… | "Wattensc… |          4 |          1 |          2 |       1993 | 1993-08-1… |
+# | "9147"     | "Borussia… | "SC Freib… |          3 |          2 |          3 |       1993 | 1993-08-2… |
+# | "9150"     | "SC Freib… | "Hamburge… |          0 |          1 |          4 |       1993 | 1993-08-2… |
+# | "9164"     | "1. FC Ko… | "SC Freib… |          2 |          0 |          5 |       1993 | 1993-09-0… |
+# +------------+------------+------------+------------+------------+------------+------------+------------+
 ```
 
 Or search for games with many home goals:
 
 ```nimrod
 df.filter(record => record.homeGoals >= 10)
-  .forEach(echoGeneric)
+  .show()
 # =>
-# (index: "944", homeTeam: "Borussia Moenchengladbach", awayTeam: "Schalke 04", homeGoals: 11, awayGoals: 0, round: 18, year: 1966, date: 1967-01-07 08:30:00)
-# (index: "1198", homeTeam: "Borussia Moenchengladbach", awayTeam: "Borussia Neunkirchen", homeGoals: 10, awayGoals: 0, round: 12, year: 1967, date: 1967-11-04 08:30:00)
-# (index: "2456", homeTeam: "Bayern Muenchen", awayTeam: "Borussia Dortmund", homeGoals: 11, awayGoals: 1, round: 16, year: 1971, date: 1971-11-27 08:30:00)
-# (index: "4457", homeTeam: "Borussia Moenchengladbach", awayTeam: "Borussia Dortmund", homeGoals: 12, awayGoals: 0, round: 34, year: 1977, date: 1978-04-29 08:30:00)
-# (index: "5788", homeTeam: "Borussia Dortmund", awayTeam: "Arminia Bielefeld", homeGoals: 11, awayGoals: 1, round: 12, year: 1982, date: 1982-11-06 08:30:00)
-# (index: "6364", homeTeam: "Borussia Moenchengladbach", awayTeam: "Eintracht Braunschweig", homeGoals: 10, awayGoals: 0, round: 8, year: 1984, date: 1984-10-11 14:00:00)
+# +------------+------------+------------+------------+------------+------------+------------+------------+
+# | index      | homeTeam   | awayTeam   |  homeGoals |  awayGoals |      round |       year | date       |
+# +------------+------------+------------+------------+------------+------------+------------+------------+
+# | "944"      | "Borussia… | "Schalke … |         11 |          0 |         18 |       1966 | 1967-01-0… |
+# | "1198"     | "Borussia… | "Borussia… |         10 |          0 |         12 |       1967 | 1967-11-0… |
+# | "2456"     | "Bayern M… | "Borussia… |         11 |          1 |         16 |       1971 | 1971-11-2… |
+# | "4457"     | "Borussia… | "Borussia… |         12 |          0 |         34 |       1977 | 1978-04-2… |
+# | "5788"     | "Borussia… | "Arminia … |         11 |          1 |         12 |       1982 | 1982-11-0… |
+# | "6364"     | "Borussia… | "Eintrach… |         10 |          0 |          8 |       1984 | 1984-10-1… |
+# +------------+------------+------------+------------+------------+------------+------------+------------+
 ```
 
 Note that we can now fully benefit from type-safety:
@@ -202,9 +214,45 @@ echo "Average away goals: ", df.map(record => record.awayGoals).mean()
 # Let's find the highest defeat
 let maxDiff = df.map(record => (record.homeGoals - record.awayGoals).abs).max()
 df.filter(record => (record.homeGoals - record.awayGoals) == maxDiff)
-  .forEach(echoGeneric)
+  .show()
 # =>
-# (index: "4457", homeTeam: "Borussia Moenchengladbach", awayTeam: "Borussia Dortmund", homeGoals: 12, awayGoals: 0, round: 34, year: 1977, date: 1978-04-29 08:30:00)
+# +------------+------------+------------+------------+------------+------------+------------+------------+
+# | index      | homeTeam   | awayTeam   |  homeGoals |  awayGoals |      round |       year | date       |
+# +------------+------------+------------+------------+------------+------------+------------+------------+
+# | "4457"     | "Borussia… | "Borussia… |         12 |          0 |         34 |       1977 | 1978-04-2… |
+# +------------+------------+------------+------------+------------+------------+------------+------------+
+```
+
+### Unique values
+
+The `DataFrame[T].unique()` transformation filters a data frame to unique elements.
+This can be used for instance to find the number of teams that appear in the data:
+
+```nimrod
+echo df.map(record => record.homeTeam).unique().count()
+# => 52
+```
+
+_Pandas user note_: In contrast to Pandas, there is no differentiation between
+a one-dimensional series and multi-dimensional data frame (`unique` vs `drop_duplicates`).
+`unique` works the same in for any hashable type `T`, e.g., we might as well get
+a data frame of unique pairs:
+
+```nimrod
+df.map(record => (record.homeTeam, record.awayTeam))
+  .unique()
+  .take(5)
+  .show()
+# =>
+# +------------+------------+
+# | Field0     | Field1     |
+# +------------+------------+
+# | "Werder B… | "Borussia… |
+# | "Hertha B… | "1. FC Nu… |
+# | "Preussen… | "Hamburge… |
+# | "Eintrach… | "1. FC Ka… |
+# | "Karlsruh… | "Meideric… |
+# +------------+------------+
 ```
 
 ## Installation (for users new to Nim)

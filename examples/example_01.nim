@@ -49,7 +49,7 @@ proc example02*() =
   echo dfRawText.count()
 
   # Show first 5 rows:
-  dfRawText.take(5).forEach(echoGeneric)
+  dfRawText.take(5).show()
 
   # Now let's parse the CSV into typesafe tuple objects using `map`. Since
   # our data set is small and we want to perform multiple operations on it,
@@ -114,6 +114,11 @@ proc example02*() =
   df.filter(record => (record.homeGoals - record.awayGoals) == maxDiff)
     .show()
 
+  # Check the total number of teams:
+  echo df.map(record => record.homeTeam).unique().count()
+
+  # Using unique with multiple dimensions:
+  df.map(record => (record.homeTeam, record.awayTeam)).unique().take(5).show()
 
 when isMainModule:
   # example01()
