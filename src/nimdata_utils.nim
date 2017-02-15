@@ -85,6 +85,9 @@ template UnitTestSuite*(name: string, code: untyped): untyped =
     suite(name):
       code
 
+template notCompiles*(e: untyped): untyped =
+  not compiles(e)
+
 template getSourcePath*(): string =
   let path = instantiationInfo(fullPaths=true)
   path.filename
