@@ -255,6 +255,30 @@ df.map(record => (record.homeTeam, record.awayTeam))
 # +------------+------------+
 ```
 
+### Sorting
+
+A data frame can be transformed into a sorted data frame by the `sort()` method.
+Without specifying any arguments, the operation would sort using default
+comparison over all columns. By specifying a key function and the sort order,
+we can for instance rank the games by the number of away goals:
+
+```nimrod
+df.sort(record => record.awayGoals, SortOrder.Descending)
+  .take(5)
+  .show()
+# =>
+# +------------+------------+------------+------------+------------+------------+------------+------------+
+# | index      | homeTeam   | awayTeam   |  homeGoals |  awayGoals |      round |       year | date       |
+# +------------+------------+------------+------------+------------+------------+------------+------------+
+# | "720"      | "Tasmania… | "Meideric… |          0 |          9 |         27 |       1965 | 1966-03-2… |
+# | "740"      | "Borussia… | "TSV 1860… |          1 |          9 |         29 |       1965 | 1966-04-1… |
+# | "11181"    | "SSV Ulm"  | "Bayer Le… |          1 |          9 |         25 |       1999 | 2000-03-1… |
+# | "4128"     | "Rot-Weis… | "Eintrach… |          1 |          8 |         32 |       1976 | 1977-05-0… |
+# | "10735"    | "Borussia… | "Bayer Le… |          2 |          8 |         10 |       1998 | 1998-10-3… |
+# +------------+------------+------------+------------+------------+------------+------------+------------+
+```
+
+
 ## Installation (for users new to Nim)
 
 NimData requires to have Nim installed. On systems where a C compiler and git is available,
@@ -277,10 +301,10 @@ To compile and run the program use `nim -r c test.nim` (`c` for compile, and `-r
 
 ## Next steps
 
-- More transformation/actions (flatMap, groupBy, join, sort, union, window)
+- More transformation and actions (flatMap, groupBy, join, union, window)
 - More data formats
-- Plotting (maybe in the form of Bokeh bindings)
 - REPL or Jupyter kernel
+- Plotting (maybe in the form of Bokeh bindings)
 
 ## License
 

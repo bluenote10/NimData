@@ -6,6 +6,7 @@ import strutils
 import sequtils
 import streams
 
+import algorithm
 import random
 import sets
 import times
@@ -18,34 +19,43 @@ export nimdata_schema_parser.ColKind
 export nimdata_schema_parser.col
 export nimdata_schema_parser.schema_parser
 
+export SortOrder
+
 import nimdata_html
 import nimdata_utils
 
 type
   DataFrame*[T] = ref object of RootObj
 
-  CachedDataFrame*[T] = ref object of DataFrame[T]
+  CachedDataFrame[T] = ref object of DataFrame[T]
     data: seq[T]
 
-  MappedDataFrame*[U, T] = ref object of DataFrame[T]
+  MappedDataFrame[U, T] = ref object of DataFrame[T]
     orig: DataFrame[U]
     f: proc(x: U): T
 
-  MappedIndexDataFrame*[U, T] = ref object of DataFrame[T]
+  MappedIndexDataFrame[U, T] = ref object of DataFrame[T]
     orig: DataFrame[U]
     f: proc(i: int, x: U): T
 
-  FilteredDataFrame*[T] = ref object of DataFrame[T]
+  FilteredDataFrame[T] = ref object of DataFrame[T]
     orig: DataFrame[T]
     f: proc(x: T): bool
 
-  FilteredIndexDataFrame*[T] = ref object of DataFrame[T]
+  FilteredIndexDataFrame[T] = ref object of DataFrame[T]
     orig: DataFrame[T]
     f: proc(i: int, x: T): bool
 
-  UniqueDataFrame*[T] = ref object of DataFrame[T]
+  UniqueDataFrame[T] = ref object of DataFrame[T]
     orig: DataFrame[T]
     seen: HashSet[T]
+
+  SortDataFrame[T, U] = ref object of DataFrame[T]
+    orig: DataFrame[T]
+    computed: bool
+    data: seq[T]
+    f: proc(x: T): U
+    order: SortOrder
 
 # -----------------------------------------------------------------------------
 # Transformations
@@ -92,6 +102,31 @@ method unique*[T](df: DataFrame[T]): DataFrame[T] {.base.} =
   ## with signature ``hash(x: T): Hash`` (see
   ## `hashes <https://nim-lang.org/docs/hashes.html>`_ documentation).
   result = UniqueDataFrame[T](orig: df, seen: initSet[T]())
+
+proc genericIdentity[T](x: T): T = x
+
+method sort*[T, U](df: DataFrame[T], f: proc(x: T): U, order: SortOrder = SortOrder.Ascending): DataFrame[T] {.base.} =
+  ## Returns a sorted data frame, where ``f`` defines the sort key.
+  ## Note: The current implementation does not yet use a spill-to-disk,
+  ## so the data frame must fit into memory.
+  result = SortDataFrame[T, U](
+    orig: df,
+    computed: false,
+    data: nil,
+    f: f,
+    order: order,
+  )
+
+method sort*[T](df: DataFrame[T], order: SortOrder = SortOrder.Ascending): DataFrame[T] {.base.} =
+  ## Returns a sorted data frame. The current implementation does not yet
+  ## use a spill-to-disk, so the data frame must fit into memory.
+  result = SortDataFrame[T, T](
+    orig: df,
+    computed: false,
+    data: nil,
+    f: genericIdentity[T],
+    order: order,
+  )
 
 # -----------------------------------------------------------------------------
 # Iterators
@@ -147,6 +182,20 @@ method iter*[T](df: UniqueDataFrame[T]): (iterator(): T) =
     for x in toIterBugfix(it):
       if not df.seen.containsOrIncl(x):
         yield x
+
+method iter*[T, U](df: SortDataFrame[T, U]): (iterator(): T) =
+  if not df.computed:
+    df.data = df.orig.collect()
+    sort(
+      df.data,
+      (x, y) => cmp(df.f(x), df.f(y)),
+      df.order
+    )
+
+  result = iterator(): T =
+    for x in df.data:
+      yield x
+
 
 # -----------------------------------------------------------------------------
 # Actions

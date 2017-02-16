@@ -120,6 +120,9 @@ proc example02*() =
   # Using unique with multiple dimensions:
   df.map(record => (record.homeTeam, record.awayTeam)).unique().take(5).show()
 
+  # Sort example: Sort by number of away goals:
+  df.sort(record => record.awayGoals, SortOrder.Descending).take(5).show()
+
 when isMainModule:
   # example01()
   example02()
