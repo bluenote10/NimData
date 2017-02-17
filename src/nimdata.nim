@@ -62,41 +62,41 @@ type
 # Transformations
 # -----------------------------------------------------------------------------
 
-method map*[U, T](df: DataFrame[U], f: proc(x: U): T): DataFrame[T] {.base.} =
+proc map*[U, T](df: DataFrame[U], f: proc(x: U): T): DataFrame[T] =
   ## Transforms a ``DataFrame[U]`` into a ``DataFrame[T]`` by applying a
   ## mapping function ``f``.
   result = MappedDataFrame[U, T](orig: df, f: f)
 
-method mapWithIndex*[U, T](df: DataFrame[U], f: proc(i: int, x: U): T): DataFrame[T] {.base.} =
+proc mapWithIndex*[U, T](df: DataFrame[U], f: proc(i: int, x: U): T): DataFrame[T] =
   ## Transforms a ``DataFrame[U]`` into a ``DataFrame[T]`` by applying a
   ## mapping function ``f``.
   result = MappedIndexDataFrame[U, T](orig: df, f: f)
 
-method filter*[T](df: DataFrame[T], f: proc(x: T): bool): DataFrame[T] {.base.} =
+proc filter*[T](df: DataFrame[T], f: proc(x: T): bool): DataFrame[T] =
   ## Filters a data frame by applying a filter function ``f``.
   result = FilteredDataFrame[T](orig: df, f: f)
 
-method filterWithIndex*[T](df: DataFrame[T], f: proc(i: int, x: T): bool): DataFrame[T] {.base.} =
+proc filterWithIndex*[T](df: DataFrame[T], f: proc(i: int, x: T): bool): DataFrame[T] =
   ## Filters a data frame by applying a filter function ``f``.
   result = FilteredIndexDataFrame[T](orig: df, f: f)
 
-method take*[T](df: DataFrame[T], n: int): DataFrame[T] {.base.} =
+proc take*[T](df: DataFrame[T], n: int): DataFrame[T] =
   ## Selects the first `n` rows of a data frame.
   proc filter(i: int, x: T): bool = i < n
   result = FilteredIndexDataFrame[T](orig: df, f: filter)
 
-method drop*[T](df: DataFrame[T], n: int): DataFrame[T] {.base.} =
+proc drop*[T](df: DataFrame[T], n: int): DataFrame[T] =
   ## Discards the first `n` rows of a data frame.
   proc filter(i: int, x: T): bool = i >= n
   result = FilteredIndexDataFrame[T](orig: df, f: filter)
 
-method sample*[T](df: DataFrame[T], probability: float): DataFrame[T] {.base.} =
+proc sample*[T](df: DataFrame[T], probability: float): DataFrame[T] =
   ## Filters a data frame by applying Bernoulli sampling with the specified
   ## sampling ``probability``.
   proc filter(x: T): bool = probability > random(1.0)
   result = FilteredDataFrame[T](orig: df, f: filter)
 
-method unique*[T](df: DataFrame[T]): DataFrame[T] {.base.} =
+proc unique*[T](df: DataFrame[T]): DataFrame[T] =
   ## Returns a data frame, which consists of the unique values of the input
   ## data frame. Note that the memory requirement is linear in the number
   ## of unique values, so use with care. Type T must provide a hash function
@@ -106,7 +106,7 @@ method unique*[T](df: DataFrame[T]): DataFrame[T] {.base.} =
 
 proc genericIdentity[T](x: T): T = x
 
-method sort*[T, U](df: DataFrame[T], f: proc(x: T): U, order: SortOrder = SortOrder.Ascending): DataFrame[T] {.base.} =
+proc sort*[T, U](df: DataFrame[T], f: proc(x: T): U, order: SortOrder = SortOrder.Ascending): DataFrame[T] =
   ## Returns a sorted data frame, where ``f`` defines the sort key.
   ## Note: The current implementation does not yet use a spill-to-disk,
   ## so the data frame must fit into memory.
@@ -118,7 +118,7 @@ method sort*[T, U](df: DataFrame[T], f: proc(x: T): U, order: SortOrder = SortOr
     order: order,
   )
 
-method sort*[T](df: DataFrame[T], order: SortOrder = SortOrder.Ascending): DataFrame[T] {.base.} =
+proc sort*[T](df: DataFrame[T], order: SortOrder = SortOrder.Ascending): DataFrame[T] =
   ## Returns a sorted data frame. The current implementation does not yet
   ## use a spill-to-disk, so the data frame must fit into memory.
   result = SortDataFrame[T, T](
