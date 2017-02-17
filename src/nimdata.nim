@@ -20,6 +20,7 @@ export nimdata_schema_parser.col
 export nimdata_schema_parser.schema_parser
 
 export SortOrder
+export `=>`
 
 import nimdata_html
 import nimdata_utils

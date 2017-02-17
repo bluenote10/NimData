@@ -7,8 +7,7 @@ elif [ "$1" == "examples" ]; then
 elif [ "$1" == "benchmarks" ]; then
   file=benchmarks/NimData/basic_tests.nim
 else
-  echo "Unknown mode"
-  exit 1
+  file="$1"
 fi
 
 echo "Compiling: $file"
