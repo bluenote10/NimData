@@ -11,10 +11,11 @@ import random
 import times
 import os
 import browsers
-import zip/zlib
 
 import sets
 import tables
+
+import nimdata/io_gzip
 
 import nimdata_schema_parser
 export nimdata_schema_parser.Column
@@ -481,7 +482,8 @@ proc fromSeq*[T](dfc: DataFrameContext, data: seq[T]): DataFrame[T] =
   ## Constructs a data frame from a sequence.
   result = CachedDataFrame[T](data: data)
 
-
+# -----------------------------------------------------------------------------
+# Range
 type
   RangeDataFrame* = ref object of DataFrame[int]
     indexFrom, indexUpto: int
@@ -510,18 +512,12 @@ method iter*(df: RangeDataFrame): (iterator(): int) =
       yield i
 
 
+# -----------------------------------------------------------------------------
+# FileRows (uncompressed)
 type
   FileRowsDataFrame* = ref object of DataFrame[string]
     filename: string
     hasHeader: bool
-
-proc fromFile*(dfc: DataFrameContext, filename: string, hasHeader: bool = true): DataFrame[string] =
-  ## Constructs a data frame from a text file, iterating
-  ## the file line by line.
-  result = FileRowsDataFrame(
-    filename: filename,
-    hasHeader: hasHeader
-  )
 
 method iter*(df: FileRowsDataFrame): (iterator(): string) =
   result = iterator(): string =
@@ -532,3 +528,61 @@ method iter*(df: FileRowsDataFrame): (iterator(): string) =
     while f.readLine(res):
       yield res
     close(f)
+
+# -----------------------------------------------------------------------------
+# FileRows (gzip)
+type
+  FileRowsGZipDataFrame* = ref object of DataFrame[string]
+    filename: string
+    hasHeader: bool
+
+method iter*(df: FileRowsGZipDataFrame): (iterator(): string) =
+  result = iterator(): string =
+    var stream = newGZipStream(df.filename)
+    var res = TaintedString(newStringOfCap(80))
+    if df.hasHeader:
+      discard stream.readLine(res)
+    while stream.readLine(res):
+      yield res
+    stream.close()
+
+
+# -----------------------------------------------------------------------------
+# Smart from file construction
+type
+  FileType* = enum
+    Auto, RawText, GZip
+
+proc fromFile*(dfc: DataFrameContext,
+               filename: string,
+               fileType: FileType = FileType.Auto,
+               hasHeader: bool = true): DataFrame[string] =
+  ## Constructs a data frame from a file, iterating the file
+  ## line by line. By default the file type is inferred from
+  ## the file name, but it can also be specified explicitly.
+
+  proc hasSuffix(s, suffix: string): bool =
+    s.toLowerAscii.endswith("." & suffix)
+
+  case fileType
+  of FileType.RawText:
+    result = FileRowsDataFrame(
+      filename: filename,
+      hasHeader: hasHeader
+    )
+  of GZip:
+    result = FileRowsGZipDataFrame(
+      filename: filename,
+      hasHeader: hasHeader
+    )
+  of FileType.Auto:
+    if filename.hasSuffix("gz"):
+      result = FileRowsGZipDataFrame(
+        filename: filename,
+        hasHeader: hasHeader
+      )
+    else:
+      result = FileRowsDataFrame(
+        filename: filename,
+        hasHeader: hasHeader
+      )
