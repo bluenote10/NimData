@@ -37,7 +37,11 @@ install:
 before_script:
     - export PATH="nim-$BRANCH/bin${PATH:+:$PATH}"
 script:
-    - nim c --cc:$CC --verbosity:0 -r -d:testNimData tests/all.nim
+    - |
+      nimble list -i
+      nimble install -y
+      nimble list -i
+      nimble test -y
     # Optional: build docs.
     # - nim doc --docSeeSrcUrl:https://github.com/AUTHOR/MYPROJECT/blob/master --project MYFILE.nim
 cache:

@@ -11,6 +11,7 @@ import random
 import times
 import os
 import browsers
+import zip/zlib
 
 import sets
 import tables
