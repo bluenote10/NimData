@@ -114,14 +114,29 @@ proc example02*() =
   df.filter(record => (record.homeGoals - record.awayGoals) == maxDiff)
     .show()
 
+  # Sort example: Sort by number of away goals:
+  df.sort(record => record.awayGoals, SortOrder.Descending).take(5).show()
+
   # Check the total number of teams:
   echo df.map(record => record.homeTeam).unique().count()
 
   # Using unique with multiple dimensions:
   df.map(record => (record.homeTeam, record.awayTeam)).unique().take(5).show()
 
-  # Sort example: Sort by number of away goals:
-  df.sort(record => record.awayGoals, SortOrder.Descending).take(5).show()
+  # Let's find the most frequent results by using `valueCounts`
+  df.map(record => (
+      homeGoals: record.homeGoals,
+      awayGoals: record.awayGoals
+    ))
+    .valueCounts()
+    .sort(x => x.count, SortOrder.Descending)
+    .map(x => (
+      homeGoals: x.key.homeGoals,
+      awayGoals: x.key.awayGoals,
+      count: x.count
+    ))
+    .take(5)
+    .show()
 
 when isMainModule:
   # example01()

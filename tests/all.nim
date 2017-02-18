@@ -7,6 +7,7 @@ import test_CachedDataFrame
 import test_MappedDataFrame
 import test_FilteredDataFrame
 import test_UniqueDataFrame
+import test_ValueCountsDataFrame
 import test_SortDataFrame
 import test_non_generic_dataframes
 import test_indexed_transformations

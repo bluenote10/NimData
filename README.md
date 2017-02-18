@@ -223,6 +223,29 @@ df.filter(record => (record.homeGoals - record.awayGoals) == maxDiff)
 # +------------+------------+------------+------------+------------+------------+------------+------------+
 ```
 
+### Sorting
+
+A data frame can be transformed into a sorted data frame by the `sort()` method.
+Without specifying any arguments, the operation would sort using default
+comparison over all columns. By specifying a key function and the sort order,
+we can for instance rank the games by the number of away goals:
+
+```nimrod
+df.sort(record => record.awayGoals, SortOrder.Descending)
+  .take(5)
+  .show()
+# =>
+# +------------+------------+------------+------------+------------+------------+------------+------------+
+# | index      | homeTeam   | awayTeam   |  homeGoals |  awayGoals |      round |       year | date       |
+# +------------+------------+------------+------------+------------+------------+------------+------------+
+# | "720"      | "Tasmania… | "Meideric… |          0 |          9 |         27 |       1965 | 1966-03-2… |
+# | "740"      | "Borussia… | "TSV 1860… |          1 |          9 |         29 |       1965 | 1966-04-1… |
+# | "11181"    | "SSV Ulm"  | "Bayer Le… |          1 |          9 |         25 |       1999 | 2000-03-1… |
+# | "4128"     | "Rot-Weis… | "Eintrach… |          1 |          8 |         32 |       1976 | 1977-05-0… |
+# | "10735"    | "Borussia… | "Bayer Le… |          2 |          8 |         10 |       1998 | 1998-10-3… |
+# +------------+------------+------------+------------+------------+------------+------------+------------+
+```
+
 ### Unique values
 
 The `DataFrame[T].unique()` transformation filters a data frame to unique elements.
@@ -255,28 +278,48 @@ df.map(record => (record.homeTeam, record.awayTeam))
 # +------------+------------+
 ```
 
-### Sorting
+### Value counts
 
-A data frame can be transformed into a sorted data frame by the `sort()` method.
-Without specifying any arguments, the operation would sort using default
-comparison over all columns. By specifying a key function and the sort order,
-we can for instance rank the games by the number of away goals:
+The `DataFrame[T].valueCounts()` transformation extends the functionality of
+`unique()` by returning the unique values and their respective counts.
+The type of the transformed data frame is a tuple of `(key: T, count: int)`,
+where `T` is the original type.
+
+In our example, we can use `valueCounts()` for instance to find the most
+frequent results in German soccer:
 
 ```nimrod
-df.sort(record => record.awayGoals, SortOrder.Descending)
+df.map(record => (
+    homeGoals: record.homeGoals,
+    awayGoals: record.awayGoals
+  ))
+  .valueCounts()
+  .sort(x => x.count, SortOrder.Descending)
+  .map(x => (
+    homeGoals: x.key.homeGoals,
+    awayGoals: x.key.awayGoals,
+    count: x.count
+  ))
   .take(5)
   .show()
 # =>
-# +------------+------------+------------+------------+------------+------------+------------+------------+
-# | index      | homeTeam   | awayTeam   |  homeGoals |  awayGoals |      round |       year | date       |
-# +------------+------------+------------+------------+------------+------------+------------+------------+
-# | "720"      | "Tasmania… | "Meideric… |          0 |          9 |         27 |       1965 | 1966-03-2… |
-# | "740"      | "Borussia… | "TSV 1860… |          1 |          9 |         29 |       1965 | 1966-04-1… |
-# | "11181"    | "SSV Ulm"  | "Bayer Le… |          1 |          9 |         25 |       1999 | 2000-03-1… |
-# | "4128"     | "Rot-Weis… | "Eintrach… |          1 |          8 |         32 |       1976 | 1977-05-0… |
-# | "10735"    | "Borussia… | "Bayer Le… |          2 |          8 |         10 |       1998 | 1998-10-3… |
-# +------------+------------+------------+------------+------------+------------+------------+------------+
+# +------------+------------+------------+
+# |  homeGoals |  awayGoals |      count |
+# +------------+------------+------------+
+# |          1 |          1 |       1632 |
+# |          2 |          1 |       1203 |
+# |          1 |          0 |       1109 |
+# |          2 |          0 |       1092 |
+# |          0 |          0 |        914 |
+# +------------+------------+------------+
 ```
+
+This transformation first projects the data onto a named tuple of
+`(homeGoals, awayGoals)`. After applying `valueCounts()` the data
+frame is sorted according to the counts. The final `map()` function
+is purely for cosmetics of the resulting table, projecting the nested
+`(key: (homeGaols: int, awayGoals: int), counts: int)` tuple back
+to a flat result.
 
 
 ## Installation (for users new to Nim)

@@ -8,10 +8,12 @@ import streams
 
 import algorithm
 import random
-import sets
 import times
 import os
 import browsers
+
+import sets
+import tables
 
 import nimdata_schema_parser
 export nimdata_schema_parser.Column
@@ -51,6 +53,10 @@ type
   UniqueDataFrame[T] = ref object of DataFrame[T]
     orig: DataFrame[T]
     seen: HashSet[T]
+
+  ValueCountsDataFrame[T] = ref object of DataFrame[tuple[key: T, count: int]]
+    orig: DataFrame[T]
+    counts: Table[T, int]
 
   SortDataFrame[T, U] = ref object of DataFrame[T]
     orig: DataFrame[T]
@@ -104,6 +110,15 @@ proc unique*[T](df: DataFrame[T]): DataFrame[T] =
   ## with signature ``hash(x: T): Hash`` (see
   ## `hashes <https://nim-lang.org/docs/hashes.html>`_ documentation).
   result = UniqueDataFrame[T](orig: df, seen: initSet[T]())
+
+proc valueCounts*[T](df: DataFrame[T]): DataFrame[tuple[key: T, count: int]] =
+  ## Returns a data frame, which consists of the unique values and theirs
+  ## respective counts. Thus, the type of the resulting data frame is
+  ## a tuple of ``(key: T, count: int)``. Note that the memory requirement
+  ## is linear in the number of unique values, so use with care.
+  ## Type T must provide a hash function with signature ``hash(x: T): Hash``
+  ## (see `hashes <https://nim-lang.org/docs/hashes.html>`_ documentation).
+  result = ValueCountsDataFrame[T](orig: df, counts: initTable[T, int]())
 
 proc genericIdentity[T](x: T): T = x
 
@@ -184,6 +199,14 @@ method iter*[T](df: UniqueDataFrame[T]): (iterator(): T) =
     for x in toIterBugfix(it):
       if not df.seen.containsOrIncl(x):
         yield x
+
+method iter*[T](df: ValueCountsDataFrame[T]): (iterator(): tuple[key: T, count: int]) =
+  result = iterator(): tuple[key: T, count: int] =
+    var it = df.orig.iter()
+    for x in toIterBugfix(it):
+      df.counts.mgetOrPut(x, 0) += 1
+    for key, count in df.counts.pairs:
+      yield (key: key, count: count)
 
 method iter*[T, U](df: SortDataFrame[T, U]): (iterator(): T) =
   if not df.computed:
