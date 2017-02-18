@@ -25,6 +25,7 @@ export `=>`
 import nimdata_html
 import nimdata_utils
 
+
 type
   DataFrame*[T] = ref object of RootObj
 
@@ -33,19 +34,19 @@ type
 
   MappedDataFrame[U, T] = ref object of DataFrame[T]
     orig: DataFrame[U]
-    f: proc(x: U): T
+    f: proc(x: U): T {.locks: 0.}
 
   MappedIndexDataFrame[U, T] = ref object of DataFrame[T]
     orig: DataFrame[U]
-    f: proc(i: int, x: U): T
+    f: proc(i: int, x: U): T {.locks: 0.}
 
   FilteredDataFrame[T] = ref object of DataFrame[T]
     orig: DataFrame[T]
-    f: proc(x: T): bool
+    f: proc(x: T): bool {.locks: 0.}
 
   FilteredIndexDataFrame[T] = ref object of DataFrame[T]
     orig: DataFrame[T]
-    f: proc(i: int, x: T): bool
+    f: proc(i: int, x: T): bool {.locks: 0.}
 
   UniqueDataFrame[T] = ref object of DataFrame[T]
     orig: DataFrame[T]
@@ -55,7 +56,7 @@ type
     orig: DataFrame[T]
     computed: bool
     data: seq[T]
-    f: proc(x: T): U
+    f: proc(x: T): U {.locks: 0.}
     order: SortOrder
 
 # -----------------------------------------------------------------------------
