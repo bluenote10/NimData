@@ -40,7 +40,6 @@ before_script:
     - export PATH="nim-$BRANCH/bin${PATH:+:$PATH}"
 script:
     - |
-      nimble list -i
       nimble install -y
       nimble list -i
       nimble test -y

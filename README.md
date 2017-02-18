@@ -325,9 +325,31 @@ to a flat result.
 ## Installation (for users new to Nim)
 
 NimData requires to have Nim installed. On systems where a C compiler and git is available,
-the best method is to [compile Nim](https://github.com/nim-lang/nim#compiling) from
-the GitHub sources. Modern versions of Nim include Nimble (Nim's package manager),
-so installing NimData becomes:
+the best method is to compile Nim from the GitHub sources. Modern versions of Nim include
+Nimble (Nim's package manager), and [building](https://github.com/nim-lang/nim#compiling)
+them both would look like:
+
+```bash
+# clone Nim
+git clone https://github.com/nim-lang/Nim.git
+cd Nim
+
+# build the C sources
+git clone --depth 1 https://github.com/nim-lang/csources.git
+cd csources
+sh build.sh
+cd ../
+
+# build Nim & Nimble
+bin/nim c koch
+./koch boot -d:release
+./koch nimble
+
+# add ./bin to path
+export PATH=$PATH:`readlink -f ./bin`
+```
+
+With Nim and Nimble installed, installing NimData becomes:
 
     $ nimble install NimData
 
