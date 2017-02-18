@@ -6,7 +6,7 @@ while true; do
   ./build.sh $1
 
   change=$(inotifywait -r -e close_write,moved_to,create,modify . \
-    --exclude 'src/main$|nimchange|#.*' \
+    --exclude 'src/main$|bin/*|nimcache|.changes|#.*' \
     2> /dev/null)
 
   # very short sleep to avoid "text file busy"
