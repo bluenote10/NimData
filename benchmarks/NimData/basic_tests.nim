@@ -139,6 +139,32 @@ proc runTestsColumnAverages() =
     pipe.writeLine df.map(x => x.intA).mean()
     pipe.writeLine df.map(x => x.intB).mean()
 
+
+proc runTestsUniqueValues() =
+  const schema = [
+    col(FloatCol, "floatA"),
+    col(FloatCol, "floatB"),
+    col(IntCol, "intA"),
+    col(IntCol, "intB"),
+  ]
+
+  runTimed("Unique values 1", 3):
+    let count = DF.fromFile("test_01.csv")
+                  .map(schemaParser(schema, ','))
+                  .map(x => x.intA)
+                  .unique()
+                  .count()
+    pipe.writeLine count
+
+  runTimed("Unique values 2", 3):
+    let count = DF.fromFile("test_01.csv")
+                  .map(schemaParser(schema, ','))
+                  .map(x => (x.intA, x.intB))
+                  .unique()
+                  .count()
+    pipe.writeLine count
+
+
 runTestsCount()
 runTestsColumnAverages()
-
+runTestsUniqueValues()

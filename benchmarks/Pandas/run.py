@@ -47,18 +47,38 @@ def test_column_averages():
     print(meanA, meanB, meanC, meanD)
 
 
+def test_unique_values1():
+    df = pd.read_csv(test_file, header=None, names=["A", "B", "C", "D"])
+    count = df.C.nunique()
+    print(count)
+
+
+def test_unique_values2():
+    df = pd.read_csv(test_file, header=None, names=["A", "B", "C", "D"])
+    count = len(df[["C", "D"]].drop_duplicates())
+    print(count)
+
+
 result_strings = [
     run_timed(
-        "Counts (no parsing, pure Python)",
+        "Count (no parsing, pure Python)",
         test_count_python
     ),
     run_timed(
-        "Counts (Pandas)",
+        "Count (Pandas)",
         test_count_pandas
     ),
     run_timed(
         "Column averages",
         test_column_averages
+    ),
+    run_timed(
+        "Unique values 1",
+        test_unique_values1
+    ),
+    run_timed(
+        "Unique values 2",
+        test_unique_values2
     ),
 ]
 
