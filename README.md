@@ -384,10 +384,10 @@ parsing, and return a count.
 
 The results are average runtime in seconds of three runs:
 
-| Task                    |          NimData |           Pandas |  Spark (4 cores) |
-|:------------------------|-----------------:|-----------------:|-----------------:|
-| Parse/Count             |            0.165 |            0.321 |            1.606 |
-| Column Averages         |            0.259 |            0.340 |            1.179 |
+| Task                    |          NimData |           Pandas |  Spark (4 cores) |   Dask (4 cores) |
+|:------------------------|-----------------:|-----------------:|-----------------:|-----------------:|
+| Parse/Count             |            0.165 |            0.321 |            1.606 |            0.182 |
+| Column Averages         |            0.259 |            0.340 |            1.179 |            0.622 |
 
 Note that Spark internally caches the file over the three runs, so the first iteration
 is much slower (with > 3 sec) while it reaches run times of 0.6 sec in the last iterations
