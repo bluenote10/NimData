@@ -1,6 +1,6 @@
 # NimData  [![Build Status](https://travis-ci.org/bluenote10/NimData.svg?branch=master)](https://travis-ci.org/bluenote10/NimData) [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](LICENSE) <a href="https://github.com/yglukhov/nimble-tag"><img src="https://raw.githubusercontent.com/yglukhov/nimble-tag/master/nimble.png" height="23" ></a>
 
-DataFrame API in Nim, enabling fast out-of-core data processing.
+DataFrame API written in Nim, enabling [fast](#benchmarks) out-of-core data processing.
 
 NimData is inspired by frameworks like Pandas/Spark/Flink/Thrill,
 and sits between the Pandas and the Spark/Flink/Thrill side.
@@ -363,6 +363,36 @@ echo DF.fromRange(0, 10).collect()
 ```
 
 To compile and run the program use `nim -r c test.nim` (`c` for compile, and `-r` to run directly after compilation).
+
+## Benchmarks
+
+More meaningful benchmarks are still on the todo list. This just shows a
+few first results. The benchmarks will be split into small (data
+which fits into memory so we can compare against Pandas or R easily) and
+big (where we can only compare against out-of-core frameworks).
+
+All implementations are available in the [benchmarks](benchmarks) folder.
+
+### Basic operations (small data)
+
+The test data set is 1 million rows CSV with two int and two float columns.
+The test tasks are:
+
+- Parse/Count: Just the most basic operations -- iterating the file, applying
+parsing, and return a count.
+- Column Averages: Same steps, plus an additional computation of all 4 column means.
+
+The results are average runtime in seconds of three runs:
+
+| Task                    |          NimData |           Pandas |  Spark (4 cores) |
+|:------------------------|-----------------:|-----------------:|-----------------:|
+| Parse/Count             |            0.165 |            0.321 |            1.606 |
+| Column Averages         |            0.259 |            0.340 |            1.179 |
+
+Note that Spark internally caches the file over the three runs, so the first iteration
+is much slower (with > 3 sec) while it reaches run times of 0.6 sec in the last iterations
+(obviously the data is too small to justify the overhead anyway).
+
 
 ## Next steps
 

@@ -8,6 +8,8 @@ import nimdata_schema_parser
 import nimdata_utils
 import parseutils
 
+let pipe = open("benchmarks/output.log", fmWrite)
+
 template runTimed(name: string, numRepeats: int, body: untyped) =
   #echo "Running: ", name, "..."
   stdout.write "Running: $1" % (name | -40)
@@ -56,7 +58,7 @@ proc parserGeneratedV02*(s: string): tuple[floatA: float, floatB: float, intA: i
   i += parseBiggestInt(s, result.intB, start=i)
 
 
-proc runTests01() =
+proc runTestsCount() =
   const schema = [
     col(FloatCol, "floatA"),
     col(FloatCol, "floatB"),
@@ -114,6 +116,29 @@ proc runTests01() =
               .filter(x => true)
               .count()
 
+  runTimed("With caching"):
+    discard DF.fromFile("test_01.csv")
+              .map(schemaParser(schema, ','))
+              .cache()
+              .count()
 
-runTests01()
+
+proc runTestsColumnAverages() =
+  const schema = [
+    col(FloatCol, "floatA"),
+    col(FloatCol, "floatB"),
+    col(IntCol, "intA"),
+    col(IntCol, "intB"),
+  ]
+  runTimed("Column averages"):
+    let df = DF.fromFile("test_01.csv")
+               .map(schemaParser(schema, ','))
+               .cache()
+    pipe.writeLine df.map(x => x.floatA).mean()
+    pipe.writeLine df.map(x => x.floatB).mean()
+    pipe.writeLine df.map(x => x.intA).mean()
+    pipe.writeLine df.map(x => x.intB).mean()
+
+runTestsCount()
+runTestsColumnAverages()
 
