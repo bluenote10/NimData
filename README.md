@@ -321,6 +321,16 @@ is purely for cosmetics of the resulting table, projecting the nested
 `(key: (homeGaols: int, awayGoals: int), counts: int)` tuple back
 to a flat result.
 
+### Data frame viewer
+
+Data frames can be opened and inspected in the browser by using `df.openInBrowser()`,
+which offers a simple Javascript based data browser:
+
+![Viewer example](docs/viewer_example.png)
+
+Note that the viewer uses static HTML, so it should only be applied to small
+or heavily filtered data frames.
+
 
 ## Installation (for users new to Nim)
 

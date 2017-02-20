@@ -4,19 +4,28 @@ const htmlTemplate* = """
 <html>
   <head>
     <meta charset="utf-8">
-    <title>DataFrame</title>
+    <title>Data Frame</title>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.13/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="https://bootswatch.com/cosmo/bootstrap.min.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+    <style>
+      .custom {
+        font-size: 10px;
+      }
+      .bottomcustom, .topcustom {
+        font-size: 10px;
+      }
+    </style>
   </head>
   <body>
 
     <div class="container">
       <div class="page-header">
-          <h3>DataFrame</h3>
+          <h3>Data Frame</h3>
       </div>
-      <table id="maintable" class="display" cellspacing="0" width="100%">
+      <table id="maintable" class="display custom" cellspacing="0" width="100%">
         ----table-data----
       </table>
     </div>
@@ -30,7 +39,8 @@ const htmlTemplate* = """
     <script>
         $(document).ready(function() {
             $('#maintable').DataTable({
-                "pageLength": 25
+                "pageLength": 25,
+                "dom": '<"topcustom"lfr>t<"bottomcustom"ip>'
             });
         });
     </script>

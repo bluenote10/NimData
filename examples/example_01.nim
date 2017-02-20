@@ -138,6 +138,9 @@ proc example02*() =
     .take(5)
     .show()
 
+  # To open data frame in browser:
+  # df.filter(x => x.year == 2000).openInBrowser()
+
 when isMainModule:
   # example01()
   example02()
