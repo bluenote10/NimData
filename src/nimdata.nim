@@ -51,6 +51,10 @@ type
     orig: DataFrame[T]
     f: proc(i: int, x: T): bool {.locks: 0.}
 
+  FlatMappedDataFrame[U, T] = ref object of DataFrame[T]
+    orig: DataFrame[U]
+    fIter: iterator(x: U): T {.locks: 0.}
+
   UniqueDataFrame[T] = ref object of DataFrame[T]
     orig: DataFrame[T]
     seen: HashSet[T]
@@ -63,7 +67,7 @@ type
     orig: DataFrame[T]
     computed: bool
     data: seq[T]
-    f: proc(x: T): U {.locks: 0.}
+    f: proc(x: U): (iterator(): T) {.locks: 0.}
     order: SortOrder
 
 # -----------------------------------------------------------------------------
@@ -103,6 +107,11 @@ proc sample*[T](df: DataFrame[T], probability: float): DataFrame[T] =
   ## sampling ``probability``.
   proc filter(x: T): bool = probability > random(1.0)
   result = FilteredDataFrame[T](orig: df, f: filter)
+
+proc flatMap*[U, T](df: DataFrame[U], fIter: proc(x: U): (iterator(): T)): DataFrame[T] =
+  ## Transforms a ``DataFrame[U]`` into a ``DataFrame[T]`` by applying an
+  ## iterator ``fIter`` to each element of the input data frame.
+  result = FlatMappedDataFrame[U, T](orig: df, fIter: fIter)
 
 proc unique*[T](df: DataFrame[T]): DataFrame[T] =
   ## Returns a data frame, which consists of the unique values of the input
@@ -193,6 +202,17 @@ method iter*[T](df: FilteredIndexDataFrame[T]): (iterator(): T) =
       if df.f(i, x):
         yield x
       i += 1
+
+method iter*[T, U](df: FlatMappedDataFrame[T, U]): (iterator(): U) =
+  result = iterator(): U =
+    var it = df.orig.iter()
+    for x in toIterBugfix(it):
+      yield df.fIter(x)
+      #var subIter = df.fIter(x)
+      #for y in toIterBugfix(df.fIter(x)):
+      #let subIter = toIterBugfix(df.fIter(x))
+      #for y in subIter:
+      #  yield y
 
 method iter*[T](df: UniqueDataFrame[T]): (iterator(): T) =
   result = iterator(): T =
