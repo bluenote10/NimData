@@ -2,7 +2,7 @@
 import future
 import strutils
 import nimdata
-import nimdata_utils
+import nimdata/utils
 
 
 proc example01*() =

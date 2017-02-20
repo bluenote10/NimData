@@ -1,5 +1,5 @@
 import nimdata
-import nimdata_utils
+import nimdata/utils
 import strutils
 
 UnitTestSuite("Non-generic DataFrames"):

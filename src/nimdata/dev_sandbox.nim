@@ -6,7 +6,7 @@ This file contains some internal dev notes/todos. Can be ignored...
 import future
 import strutils
 import nimdata
-import nimdata_utils
+import utils
 
 block:
   # would be nice to find a better solution than the echoGeneric

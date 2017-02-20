@@ -4,8 +4,8 @@ import strutils
 import nimdata
 import times
 
-import nimdata_schema_parser
-import nimdata_utils
+import nimdata/schema_parser
+import nimdata/utils
 import parseutils
 
 let pipe = open("benchmarks/output.log", fmWrite)

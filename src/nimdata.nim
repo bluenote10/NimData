@@ -15,19 +15,18 @@ import browsers
 import sets
 import tables
 
-import nimdata/io_gzip
-
-import nimdata_schema_parser
-export nimdata_schema_parser.Column
-export nimdata_schema_parser.ColKind
-export nimdata_schema_parser.col
-export nimdata_schema_parser.schema_parser
+import nimdata/schema_parser
+export schema_parser.Column
+export schema_parser.ColKind
+export schema_parser.col
+export schema_parser.schema_parser
 
 export SortOrder
 export `=>`
 
-import nimdata_html
-import nimdata_utils
+import nimdata/io_gzip
+import nimdata/html
+import nimdata/utils
 
 
 type

@@ -3,8 +3,8 @@ import strutils
 import math
 
 import nimdata
-import nimdata_utils
-import nimdata_schema_parser
+import nimdata/utils
+import nimdata/schema_parser
 
 
 UnitTestSuite("Schema Parser"):

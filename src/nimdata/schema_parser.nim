@@ -56,7 +56,7 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
 
   # TODO: Why can't I just use:
   # var returnType = schemaType(schema)
-  # /home/fabian/github/NimData/src/nimdata_schema_parser.nim(58, 30) Error: type mismatch: got (openarray[Column])
+  # /home/fabian/github/NimData/src/nimdata/schema_parser.nim(58, 30) Error: type mismatch: got (openarray[Column])
   # but expected one of:
   # macro schemaType[](schema: static[openArray[Column]]): untyped
 
