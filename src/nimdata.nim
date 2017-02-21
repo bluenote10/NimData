@@ -53,7 +53,7 @@ type
 
   FlatMappedDataFrame[U, T] = ref object of DataFrame[T]
     orig: DataFrame[U]
-    fIter: iterator(x: U): T {.locks: 0.}
+    fIter: proc(x: U): (iterator(): T) {.locks: 0.}
 
   UniqueDataFrame[T] = ref object of DataFrame[T]
     orig: DataFrame[T]
@@ -67,7 +67,7 @@ type
     orig: DataFrame[T]
     computed: bool
     data: seq[T]
-    f: proc(x: U): (iterator(): T) {.locks: 0.}
+    f: proc(x: T): U {.locks: 0.}
     order: SortOrder
 
 # -----------------------------------------------------------------------------
@@ -207,12 +207,9 @@ method iter*[T, U](df: FlatMappedDataFrame[T, U]): (iterator(): U) =
   result = iterator(): U =
     var it = df.orig.iter()
     for x in toIterBugfix(it):
-      yield df.fIter(x)
-      #var subIter = df.fIter(x)
-      #for y in toIterBugfix(df.fIter(x)):
-      #let subIter = toIterBugfix(df.fIter(x))
-      #for y in subIter:
-      #  yield y
+      var subIter = df.fIter(x)
+      for y in toIterBugfix(subIter):
+        yield y
 
 method iter*[T](df: UniqueDataFrame[T]): (iterator(): T) =
   result = iterator(): T =
