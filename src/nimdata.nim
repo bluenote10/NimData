@@ -55,6 +55,10 @@ type
     orig: DataFrame[U]
     f: proc(x: U): seq[T] {.locks: 0.}
 
+  FlatMappedDataFrame[U, T] = ref object of DataFrame[T]
+    orig: DataFrame[U]
+    fIter: proc(x: U): (iterator(): T) {.locks: 0.}
+
   UniqueDataFrame[T] = ref object of DataFrame[T]
     orig: DataFrame[T]
     seen: HashSet[T]
@@ -113,6 +117,11 @@ proc flatMap*[U, T](df: DataFrame[U], f: proc(x: U): seq[T]): DataFrame[T] =
   ## to each element of the input data frame, and inserting the elements of
   ## the output ``seq[T]`` into the result data frame.
   result = FlatMappedSeqDataFrame[U, T](orig: df, f: f)
+
+proc flatMap*[U, T](df: DataFrame[U], fIter: proc(x: U): (iterator(): T)): DataFrame[T] =
+  ## Transforms a ``DataFrame[U]`` into a ``DataFrame[T]`` by applying an
+  ## iterator ``fIter`` to each element of the input data frame.
+  result = FlatMappedDataFrame[U, T](orig: df, fIter: fIter)
 
 proc unique*[T](df: DataFrame[T]): DataFrame[T] =
   ## Returns a data frame, which consists of the unique values of the input
@@ -209,6 +218,14 @@ method iter*[T, U](df: FlatMappedSeqDataFrame[T, U]): (iterator(): U) =
     var it = df.orig.iter()
     for x in toIterBugfix(it):
       for y in df.f(x):
+        yield y
+
+method iter*[T, U](df: FlatMappedDataFrame[T, U]): (iterator(): U) =
+  result = iterator(): U =
+    var it = df.orig.iter()
+    for x in toIterBugfix(it):
+      var subIter = df.fIter(x)
+      for y in toIterBugfix(subIter):
         yield y
 
 method iter*[T](df: UniqueDataFrame[T]): (iterator(): T) =
