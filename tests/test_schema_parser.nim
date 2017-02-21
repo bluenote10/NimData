@@ -1,13 +1,14 @@
 import future
 import strutils
 import math
+import times
 
 import nimdata
 import nimdata/utils
 import nimdata/schema_parser
 
 
-UnitTestSuite("Schema Parser"):
+UnitTestSuite("Schema parser"):
   test "skipPastSep -- empty":
     var i = 0
     var hitEnd = false
@@ -205,4 +206,23 @@ UnitTestSuite("Schema Parser"):
     let parser = schemaParser(schema, ';')
     check:
       parser("1.2;1.3;1.4") == (columnA: 1.2, columnB: 1.3, columnC: 1.4)
+
+proc constructDate(year, month, day: int): TimeInfo =
+  TimeInfo(year: year, month: (month-1).Month, monthday: day, isDst: true)
+
+proc equals(t: TimeInfo, year, month, day: int): bool =
+  result = (
+    t.year == year and
+    t.month == (month-1).Month and
+    t.monthday == day
+  )
+
+UnitTestSuite("Schema parser -- date parsing"):
+  test "basic test":
+    const schema = [
+      dateCol("date")
+    ]
+    let parser = schemaParser(schema, ';')
+    check parser("2017-01-01").date.getLocalTime().equals(2017, 1, 1)
+
 

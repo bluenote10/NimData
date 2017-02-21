@@ -2,23 +2,29 @@ import macros
 
 import strutils
 import parseutils
+import times
 
 type
   ColKind* = enum
     StrCol,
     IntCol,
-    FloatCol
+    FloatCol,
+    DateCol
   Column* = object # TODO: this should get documented: https://forum.nim-lang.org/t/196
     name*: string
     case kind*: ColKind
     of StrCol:
       stripQuotes: bool
+    of DateCol:
+      format: string
     else:
       discard
 
 proc col*(kind: ColKind, name: string): Column =
   Column(kind: kind, name: name)
 
+proc dateCol*(name: string, format: string = "yyyy-MM-dd"): Column =
+  Column(name: name, kind: DateCol, format: format)
 
 template skipPastSep*(s: untyped, i: untyped, hitEnd: untyped, sep: char) =
   while s[i] != sep and i < s.len:
@@ -40,11 +46,12 @@ macro schemaType*(schema: static[openarray[Column]]): untyped =
   for col in schema:
     # TODO: This can probably done using true types + type.getType.name
     let typ = case col.kind
-      of StrCol: "string"
-      of IntCol: "int64"
-      of FloatCol: "float"
+      of StrCol: bindSym"string"
+      of IntCol: bindSym"int64"
+      of FloatCol: bindSym"float"
+      of DateCol: bindSym"Time"
     result.add(
-      newIdentDefs(name = newIdentNode(col.name), kind = ident(typ))
+      newIdentDefs(name = newIdentNode(col.name), kind = typ)
     )
 
 
@@ -64,11 +71,12 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
   for col in schema:
     # TODO: This can probably done using true types + type.getType.name
     let typ = case col.kind
-      of StrCol: "string"
-      of IntCol: "int64"
-      of FloatCol: "float"
+      of StrCol: bindSym"string"
+      of IntCol: bindSym"int64"
+      of FloatCol: bindSym"float"
+      of DateCol: bindSym"Time"
     returnType.add(
-      newIdentDefs(name = newIdentNode(col.name), kind = ident(typ))
+      newIdentDefs(name = newIdentNode(col.name), kind = typ)
     )
   when defined(checkMacros):
     #echo returnType.treeRepr
@@ -85,6 +93,17 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
       field = substr(s, copyFrom, i-2)
     else:
       field = substr(s, copyFrom, s.len)
+
+  template fragmentReadDate(field: untyped, sep: char, format: string) =
+    ## read string
+    copyFrom = i
+    skipPastSep(s, i, hitEnd, sep)
+    let s =
+      if not hitEnd:
+        substr(s, copyFrom, i-2)
+      else:
+        substr(s, copyFrom, s.len)
+    field = times.toTime(times.parse(s, format)) # TODO: handle exceptions
 
   template fragmentReadInt(field: untyped) =
     ## read int
@@ -114,6 +133,12 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
       let call = getAst(fragmentReadStr(fieldExpr, sepExpr))
       body.add(call)
       # for a StrCol we don't need the call to fragmentSkipPastSep, because
+      # the string extraction already advances past the separator
+      requiresAdvancePastSep = false
+    of DateCol:
+      let call = getAst(fragmentReadDate(fieldExpr, sepExpr, col.format))
+      body.add(call)
+      # for a DateCol we don't need the call to fragmentSkipPastSep, because
       # the string extraction already advances past the separator
       requiresAdvancePastSep = false
     of IntCol:
