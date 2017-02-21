@@ -406,7 +406,7 @@ is much slower (with > 3 sec) while it reaches run times of 0.6 sec in the last 
 
 ## Next steps
 
-- More transformation and actions (flatMap, groupBy, join, union, window)
+- More transformation and actions (groupBy, join, union, window)
 - More data formats
 - REPL or Jupyter kernel
 - Plotting (maybe in the form of Bokeh bindings)
