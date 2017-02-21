@@ -51,6 +51,10 @@ type
     orig: DataFrame[T]
     f: proc(i: int, x: T): bool {.locks: 0.}
 
+  FlatMappedSeqDataFrame[U, T] = ref object of DataFrame[T]
+    orig: DataFrame[U]
+    f: proc(x: U): seq[T] {.locks: 0.}
+
   UniqueDataFrame[T] = ref object of DataFrame[T]
     orig: DataFrame[T]
     seen: HashSet[T]
@@ -103,6 +107,12 @@ proc sample*[T](df: DataFrame[T], probability: float): DataFrame[T] =
   ## sampling ``probability``.
   proc filter(x: T): bool = probability > random(1.0)
   result = FilteredDataFrame[T](orig: df, f: filter)
+
+proc flatMap*[U, T](df: DataFrame[U], f: proc(x: U): seq[T]): DataFrame[T] =
+  ## Transforms a ``DataFrame[U]`` into a ``DataFrame[T]`` by applying ``f``
+  ## to each element of the input data frame, and inserting the elements of
+  ## the output ``seq[T]`` into the result data frame.
+  result = FlatMappedSeqDataFrame[U, T](orig: df, f: f)
 
 proc unique*[T](df: DataFrame[T]): DataFrame[T] =
   ## Returns a data frame, which consists of the unique values of the input
@@ -193,6 +203,13 @@ method iter*[T](df: FilteredIndexDataFrame[T]): (iterator(): T) =
       if df.f(i, x):
         yield x
       i += 1
+
+method iter*[T, U](df: FlatMappedSeqDataFrame[T, U]): (iterator(): U) =
+  result = iterator(): U =
+    var it = df.orig.iter()
+    for x in toIterBugfix(it):
+      for y in df.f(x):
+        yield y
 
 method iter*[T](df: UniqueDataFrame[T]): (iterator(): T) =
   result = iterator(): T =
