@@ -11,17 +11,29 @@ macro projectTo*(t: typed, fields: varargs[untyped]): untyped =
   if fields.len == 0:
     error "At least one field required to project to."
 
-  let tType = t.getType               # returns the type as a NimNode
-  let tTypeKind = tType.typeKind
-
-  if not (tTypeKind in {ntyTuple, ntyObject}):
+  # check type of t
+  var tTypeImpl = t.getTypeImpl
+  # echo tTypeImpl.len
+  # echo tTypeImpl.kind
+  # echo tTypeImpl.typeKind
+  # echo tTypeImpl.treeRepr
+  case tTypeImpl.typeKind:
+  of ntyTuple:
+    # For a tuple the IdentDefs are top level, no need to descent
+    discard
+  of ntyObject:
+    # For an object the children are (https://forum.nim-lang.org/t/2483#15391):
+    # - pragmas (=> typically Empty)
+    # - parent (=> typically Empty)
+    # - nnkRecList, which contains the IdentDefs we are looking for
+    tTypeImpl = tTypeImpl[2]
+  else:
     error "projectTo expects a tuple or object, but received: " & t.repr &
-          " which has typeKind " & tTypeKind.repr
+          " which has typeKind " & tTypeImpl.typeKind.repr
 
   # extract fields present in given tuple
   var tupleFields = initOrderedSet[string]()
-  let tTypeInst = t.getTypeInst
-  for child in tTypeInst.children:
+  for child in tTypeImpl.children:
     if child.kind != nnkIdentDefs:
       error "projectTo expects a tuple or object, consisting of nnkIdentDefs children."
     else:
@@ -50,17 +62,29 @@ macro projectAway*(t: typed, fields: varargs[untyped]): untyped =
   ## Allows to project a given tuple to a subset of its fields,
   ## by removing the specified fields.
 
-  let tType = t.getType               # returns the type as a NimNode
-  let tTypeKind = tType.typeKind
-
-  if not (tTypeKind in {ntyTuple, ntyObject}):
+  # check type of t
+  var tTypeImpl = t.getTypeImpl
+  # echo tTypeImpl.len
+  # echo tTypeImpl.kind
+  # echo tTypeImpl.typeKind
+  # echo tTypeImpl.treeRepr
+  case tTypeImpl.typeKind:
+  of ntyTuple:
+    # For a tuple the IdentDefs are top level, no need to descent
+    discard
+  of ntyObject:
+    # For an object the children are (https://forum.nim-lang.org/t/2483#15391):
+    # - pragmas (=> typically Empty)
+    # - parent (=> typically Empty)
+    # - nnkRecList, which contains the IdentDefs we are looking for
+    tTypeImpl = tTypeImpl[2]
+  else:
     error "projectAway expects a tuple or object, but received: " & t.repr &
-          " which has typeKind " & tTypeKind.repr
+          " which has typeKind " & tTypeImpl.typeKind.repr
 
   # extract fields present in given tuple
   var tupleFields = initOrderedSet[string]()
-  let tTypeInst = t.getTypeInst
-  for child in tTypeInst.children:
+  for child in tTypeImpl.children:
     if child.kind != nnkIdentDefs:
       error "projectAway expects a tuple or object, consisting of nnkIdentDefs children."
     else:
@@ -131,15 +155,13 @@ UnitTestSuite("Tuples"):
       check: t.projectTo(name, age).projectTo(age) == (age: 99)
 
     block:
-      when false: # doesn't work on object yet
-        type
-          TestObj = object
-            x: int
-            y: int
-        check: TestObj(x: 1, y: 2).projectTo(x, y) == (x: 1, y: 2)
-        check: TestObj(x: 1, y: 2).projectTo(x) == (x: 1)
-        check: TestObj(x: 1, y: 2).projectTo(y) == (y: 2)
-
+      type
+        TestObj = object
+          x: int
+          y: int
+      check: TestObj(x: 1, y: 2).projectTo(x, y) == (x: 1, y: 2)
+      check: TestObj(x: 1, y: 2).projectTo(x) == (x: 1)
+      check: TestObj(x: 1, y: 2).projectTo(y) == (y: 2)
 
     block:
       let t = (name: "A", age: 99, height: 200.0)
@@ -161,6 +183,15 @@ UnitTestSuite("Tuples"):
       check: (name: "A", age: 99).projectAway(name) == (age: 99)
       check: (name: "A", age: 99).projectAway(age) == (name: "A")
       check: (name: "A", age: 99).projectAway() == (name: "A", age: 99)
+
+    block:
+      type
+        TestObj = object
+          x: int
+          y: int
+      check: TestObj(x: 1, y: 2).projectAway(x) == (y: 2)
+      check: TestObj(x: 1, y: 2).projectAway(y) == (x: 1)
+      check: TestObj(x: 1, y: 2).projectAway() == (x: 1, y: 2)
 
     block:
       let t = (name: "A", age: 99, height: 200.0)
