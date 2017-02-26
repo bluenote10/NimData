@@ -119,82 +119,157 @@ macro projectAway*(t: typed, fields: varargs[untyped]): untyped =
       )
 
 
+macro addFields*(t: typed, fields: varargs[untyped]): untyped =
+  ## Returns a new tuple expression, containing all fields of
+  ## the given tuple, plus new fields as specified in the varargs.
+  ## New field expressions are specified as colon expressions, i.e.:
+  ## .. code-block:: nim
+  ##   let t = (x: 1.0, y: 1.0)
+  ##   let tExtended = addFields(t, length: sqrt(t.x*t.x + t.y*t.y))
+  ##
+  ## Notes:
+  ## - The expression must use the fully qualified name (like ``t.x``),
+  ##   not just the field names (``x``).
+  ## - The syntax ``t.addFields(length: sqrt(t.x*t.x + t.y*t.y)`` is currently
+  ##   not yet supported by the compiler.
 
-UnitTestSuite("Tuples"):
+  # echo fields.treeRepr
+  # echo fields.len
+  # echo fields.repr
+  if fields.len == 0:
+    error "addFields expects at least one field."
 
-  proc genTupleFromProc(): tuple[a: int, b: string] =
-    result = (a: 1, b: "2")
+  # check type of t
+  var tTypeImpl = t.getTypeImpl
+  case tTypeImpl.typeKind:
+  of ntyTuple:
+    discard
+  of ntyObject:
+    tTypeImpl = tTypeImpl[2]
+  else:
+    error "projectTo expects a tuple or object, but received: " & t.repr &
+          " which has typeKind " & tTypeImpl.typeKind.repr
 
-  test "projectTo":
+  # extract fields present in given tuple
+  var tupleFields = newSeq[string]()
+  for child in tTypeImpl.children:
+    if child.kind != nnkIdentDefs:
+      error "projectTo expects a tuple or object, consisting of nnkIdentDefs children."
+    else:
+      let field = child[0] # first child of IdentDef is a Sym corresponding to field name
+      tupleFields.add($field)
 
-    block:
-      let t = (name: "A", age: 99)
-      check: t.projectTo(name, age) == (name: "A", age: 99)
-      check: t.projectTo(age, name) == (age: 99, name: "A")
-      check: t.projectTo(name) == (name: "A")
-      check: t.projectTo(age) == (age: 99)
+  # add all already existing fields first
+  result = newPar()
+  for field in tupleFields:
+    # create the `t.field` expression
+    let fieldExpr = newDotExpr(t, ident(field))
+    # and add `field: t.field` to the Par experession
+    result.add(
+      newColonExpr(newIdentNode($field), fieldExpr)
+    )
 
-      check: (name: "A", age: 99).projectTo(name, age) == (name: "A", age: 99)
-      check: (name: "A", age: 99).projectTo(age, name) == (age: 99, name: "A")
-      check: (name: "A", age: 99).projectTo(name) == (name: "A")
-      check: (name: "A", age: 99).projectTo(age) == (age: 99)
+  # add new fields
+  for field in fields:
+    if field.kind != nnkExprColonExpr:
+      error "addFields expects varargs of kind nnkExprColonExpr, but received: " &
+            field.repr & " which is of kind " & $field.kind
+    else:
+      let fieldName = field[0]
+      let fieldExpr = field[1]
+      result.add(
+        newColonExpr(fieldName, fieldExpr)
+      )
 
-    block:
-      let t = genTupleFromProc()
-      check: t.projectTo(a, b) == (a: 1, b: "2")
-      check: t.projectTo(a) == (a: 1)
-      check: t.projectTo(b) == (b: "2")
 
-      check: genTupleFromProc().projectTo(a, b) == (a: 1, b: "2")
-      check: genTupleFromProc().projectTo(a) == (a: 1)
-      check: genTupleFromProc().projectTo(b) == (b: "2")
 
-    block:
-      let t = (name: "A", age: 99, height: 200.0)
-      check: t.projectTo(name, age, height).projectTo(name, age, height) == t
-      check: t.projectTo(name, age).projectTo(age) == (age: 99)
+when isMainModule:
+  import unittest
+  import math
 
-    block:
-      type
-        TestObj = object
-          x: int
-          y: int
-      check: TestObj(x: 1, y: 2).projectTo(x, y) == (x: 1, y: 2)
-      check: TestObj(x: 1, y: 2).projectTo(x) == (x: 1)
-      check: TestObj(x: 1, y: 2).projectTo(y) == (y: 2)
+  suite("Tuples"):
 
-    block:
-      let t = (name: "A", age: 99, height: 200.0)
-      check: notCompiles: t.projectTo()
-      check: notCompiles: t.projectTo(nonExisting)
-      check: notCompiles: t.projectTo(asdf asdf)
-      check: notCompiles: t.projectTo(name, age, name)
-      check: notCompiles: t.projectTo(name, age).projectTo(height)
+    proc genTupleFromProc(): tuple[a: int, b: string] =
+      result = (a: 1, b: "2")
 
-  test "projectAway":
+    test "projectTo":
 
-    block:
-      let t = (name: "A", age: 99)
-      check: t.projectAway(name) == (age: 99)
-      check: t.projectAway(age) == (name: "A")
-      check: t.projectAway() == (name: "A", age: 99)
+      block:
+        let t = (name: "A", age: 99)
+        check: t.projectTo(name, age) == (name: "A", age: 99)
+        check: t.projectTo(age, name) == (age: 99, name: "A")
+        check: t.projectTo(name) == (name: "A")
+        check: t.projectTo(age) == (age: 99)
 
-    block:
-      check: (name: "A", age: 99).projectAway(name) == (age: 99)
-      check: (name: "A", age: 99).projectAway(age) == (name: "A")
-      check: (name: "A", age: 99).projectAway() == (name: "A", age: 99)
+        check: (name: "A", age: 99).projectTo(name, age) == (name: "A", age: 99)
+        check: (name: "A", age: 99).projectTo(age, name) == (age: 99, name: "A")
+        check: (name: "A", age: 99).projectTo(name) == (name: "A")
+        check: (name: "A", age: 99).projectTo(age) == (age: 99)
 
-    block:
-      type
-        TestObj = object
-          x: int
-          y: int
-      check: TestObj(x: 1, y: 2).projectAway(x) == (y: 2)
-      check: TestObj(x: 1, y: 2).projectAway(y) == (x: 1)
-      check: TestObj(x: 1, y: 2).projectAway() == (x: 1, y: 2)
+      block:
+        let t = genTupleFromProc()
+        check: t.projectTo(a, b) == (a: 1, b: "2")
+        check: t.projectTo(a) == (a: 1)
+        check: t.projectTo(b) == (b: "2")
 
-    block:
-      let t = (name: "A", age: 99, height: 200.0)
-      check: notCompiles: t.projectAway(name, age, height)
-      check: notCompiles: t.projectAway(nameDoesNotExist)
-      check: notCompiles: t.projectAway(name).projectAway(name)
+        check: genTupleFromProc().projectTo(a, b) == (a: 1, b: "2")
+        check: genTupleFromProc().projectTo(a) == (a: 1)
+        check: genTupleFromProc().projectTo(b) == (b: "2")
+
+      block:
+        let t = (name: "A", age: 99, height: 200.0)
+        check: t.projectTo(name, age, height).projectTo(name, age, height) == t
+        check: t.projectTo(name, age).projectTo(age) == (age: 99)
+
+      block:
+        type
+          TestObj = object
+            x: int
+            y: int
+        check: TestObj(x: 1, y: 2).projectTo(x, y) == (x: 1, y: 2)
+        check: TestObj(x: 1, y: 2).projectTo(x) == (x: 1)
+        check: TestObj(x: 1, y: 2).projectTo(y) == (y: 2)
+
+      block:
+        let t = (name: "A", age: 99, height: 200.0)
+        check: notCompiles: t.projectTo()
+        check: notCompiles: t.projectTo(nonExisting)
+        check: notCompiles: t.projectTo(asdf asdf)
+        check: notCompiles: t.projectTo(name, age, name)
+        check: notCompiles: t.projectTo(name, age).projectTo(height)
+
+    test "projectAway":
+
+      block:
+        let t = (name: "A", age: 99)
+        check: t.projectAway(name) == (age: 99)
+        check: t.projectAway(age) == (name: "A")
+        check: t.projectAway() == (name: "A", age: 99)
+
+      block:
+        check: (name: "A", age: 99).projectAway(name) == (age: 99)
+        check: (name: "A", age: 99).projectAway(age) == (name: "A")
+        check: (name: "A", age: 99).projectAway() == (name: "A", age: 99)
+
+      block:
+        type
+          TestObj = object
+            x: int
+            y: int
+        check: TestObj(x: 1, y: 2).projectAway(x) == (y: 2)
+        check: TestObj(x: 1, y: 2).projectAway(y) == (x: 1)
+        check: TestObj(x: 1, y: 2).projectAway() == (x: 1, y: 2)
+
+      block:
+        let t = (name: "A", age: 99, height: 200.0)
+        check: notCompiles: t.projectAway(name, age, height)
+        check: notCompiles: t.projectAway(nameDoesNotExist)
+        check: notCompiles: t.projectAway(name).projectAway(name)
+
+    test "addFields":
+
+      let t = (x: 1.0, y: 1.0)
+      #let tExtended = t.addFields(length: x*x + y*y)
+      let tExtended = addFields(t, length: sqrt(t.x*t.x + t.y*t.y))
+      check tExtended == (x: 1.0, y: 1.0, length: sqrt(2.0))
+
