@@ -147,14 +147,14 @@ macro addFields*(t: typed, fields: varargs[untyped]): untyped =
   of ntyObject:
     tTypeImpl = tTypeImpl[2]
   else:
-    error "projectTo expects a tuple or object, but received: " & t.repr &
+    error "addFields expects a tuple or object, but received: " & t.repr &
           " which has typeKind " & tTypeImpl.typeKind.repr
 
   # extract fields present in given tuple
   var tupleFields = newSeq[string]()
   for child in tTypeImpl.children:
     if child.kind != nnkIdentDefs:
-      error "projectTo expects a tuple or object, consisting of nnkIdentDefs children."
+      error "addFields expects a tuple or object, consisting of nnkIdentDefs children."
     else:
       let field = child[0] # first child of IdentDef is a Sym corresponding to field name
       tupleFields.add($field)
@@ -182,6 +182,66 @@ macro addFields*(t: typed, fields: varargs[untyped]): untyped =
       )
 
 
+macro addField*(t: typed, field: untyped): untyped =
+  ## Returns a new tuple expression, containing all fields of
+  ## the given tuple, plus a new field as specified in ``field``.
+  ## New field expressions are specified as colon expressions, i.e.:
+  ## .. code-block:: nim
+  ##   let t = (x: 1.0, y: 1.0)
+  ##   let tExtended = addField(t, length: sqrt(t.x*t.x + t.y*t.y))
+  ##
+  ## Notes:
+  ## - The expression must use the fully qualified name (like ``t.x``),
+  ##   not just the field names (``x``).
+  ## - The syntax ``t.addFields(length: sqrt(t.x*t.x + t.y*t.y)`` is currently
+  ##   not yet supported by the compiler.
+
+  # echo fields.treeRepr
+  # echo fields.len
+  # echo fields.repr
+
+  # check type of t
+  var tTypeImpl = t.getTypeImpl
+  case tTypeImpl.typeKind:
+  of ntyTuple:
+    discard
+  of ntyObject:
+    tTypeImpl = tTypeImpl[2]
+  else:
+    error "addField expects a tuple or object, but received: " & t.repr &
+          " which has typeKind " & tTypeImpl.typeKind.repr
+
+  # extract fields present in given tuple
+  var tupleFields = newSeq[string]()
+  for child in tTypeImpl.children:
+    if child.kind != nnkIdentDefs:
+      error "addField expects a tuple or object, consisting of nnkIdentDefs children."
+    else:
+      let field = child[0] # first child of IdentDef is a Sym corresponding to field name
+      tupleFields.add($field)
+
+  # add all already existing fields first
+  result = newPar()
+  for field in tupleFields:
+    # create the `t.field` expression
+    let fieldExpr = newDotExpr(t, ident(field))
+    # and add `field: t.field` to the Par experession
+    result.add(
+      newColonExpr(newIdentNode($field), fieldExpr)
+    )
+
+  # add new field
+  if field.kind != nnkExprColonExpr:
+    error "addField expects varargs of kind nnkExprColonExpr, but received: " &
+          field.repr & " which is of kind " & $field.kind
+  else:
+    let fieldName = field[0]
+    let fieldExpr = field[1]
+    result.add(
+      newColonExpr(fieldName, fieldExpr)
+    )
+
+
 
 when isMainModule:
   import unittest
@@ -191,6 +251,7 @@ when isMainModule:
 
     proc genTupleFromProc(): tuple[a: int, b: string] =
       result = (a: 1, b: "2")
+
 
     test "projectTo":
 
@@ -238,6 +299,7 @@ when isMainModule:
         check: notCompiles: t.projectTo(name, age, name)
         check: notCompiles: t.projectTo(name, age).projectTo(height)
 
+
     test "projectAway":
 
       block:
@@ -266,10 +328,18 @@ when isMainModule:
         check: notCompiles: t.projectAway(nameDoesNotExist)
         check: notCompiles: t.projectAway(name).projectAway(name)
 
+
+    test "addField":
+
+      let t = (x: 1.0, y: 1.0)
+      let tExtended = addField(t, length: sqrt(t.x*t.x + t.y*t.y))
+      check tExtended == (x: 1.0, y: 1.0, length: sqrt(2.0))
+
+
     test "addFields":
 
       let t = (x: 1.0, y: 1.0)
       #let tExtended = t.addFields(length: x*x + y*y)
-      let tExtended = addFields(t, length: sqrt(t.x*t.x + t.y*t.y))
-      check tExtended == (x: 1.0, y: 1.0, length: sqrt(2.0))
+      let tExtended = addFields(t, length1: sqrt(t.x*t.x + t.y*t.y), length2: sqrt(t.x*t.x + t.y*t.y))
+      check tExtended == (x: 1.0, y: 1.0, length1: sqrt(2.0), length2: sqrt(2.0))
 
