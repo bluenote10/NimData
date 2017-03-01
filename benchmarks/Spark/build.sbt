@@ -1,7 +1,7 @@
 lazy val root = (project in file("."))
 
 name := "SparkBenchmark"
-version := "1.0"
+version := "0.1"
 scalaVersion := "2.11.8"
 mainClass in (Compile, run) := Some("nodomain.Benchmark")
 

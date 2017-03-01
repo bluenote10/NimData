@@ -67,6 +67,13 @@ type
     orig: DataFrame[T]
     counts: Table[T, int]
 
+  GroupByReduceDataFrame[T, K, U] = ref object of DataFrame[U]
+    keyFunc: proc(x: T): K {.locks: 0.}
+    reduceFunc: proc(key: K, df: DataFrame[T]): U {.locks: 0.}
+    orig: DataFrame[T]
+    computed: bool
+    data: Table[K, seq[T]]
+
   SortDataFrame[T, U] = ref object of DataFrame[T]
     orig: DataFrame[T]
     computed: bool
@@ -165,6 +172,17 @@ proc sort*[T](df: DataFrame[T], order: SortOrder = SortOrder.Ascending): DataFra
     order: order,
   )
 
+proc groupBy*[T, K, U](df: DataFrame[T], keyFunc: proc(x: T): K, reduceFunc: proc(key: K, df: DataFrame[T]): U): DataFrame[U] =
+  ## Groups a data frame according to ``keyFunc`` and applies
+  ## ``reduceFunc`` to each group.
+  result = GroupByReduceDataFrame[T, K, U](
+    keyFunc: keyFunc,
+    reduceFunc: reduceFunc,
+    orig: df,
+    computed: false,
+    data: initTable[K, seq[T]]()
+  )
+
 # -----------------------------------------------------------------------------
 # Iterators
 # -----------------------------------------------------------------------------
@@ -255,6 +273,19 @@ method iter*[T, U](df: SortDataFrame[T, U]): (iterator(): T) =
   result = iterator(): T =
     for x in df.data:
       yield x
+
+method iter*[T, K, U](df: GroupByReduceDataFrame[T, K, U]): (iterator(): U) =
+  if not df.computed:
+    var it = df.orig.iter()
+    for x in toIterBugfix(it):
+      let key = df.keyFunc(x)
+      df.data.mgetOrPut(key, newSeq[T]()).add(x)
+
+  result = iterator(): U =
+    for key, values in df.data.pairs:
+      let dfGroup = CachedDataFrame[T](data: values) # TODO: avoid copying?
+      let reduced = df.reduceFunc(key, dfGroup)
+      yield reduced
 
 
 # -----------------------------------------------------------------------------
