@@ -1219,13 +1219,16 @@ function main() {
   <ul class="simple simple-toc-section">
       <li><a class="reference" href="#ColKind"
     title="ColKind = enum
-  StrCol, IntCol, FloatCol"><wbr />Col<wbr />Kind<span class="attachedType" style="visibility:hidden"></span></a></li>
+  StrCol, IntCol, FloatCol, DateCol"><wbr />Col<wbr />Kind<span class="attachedType" style="visibility:hidden"></span></a></li>
   <li><a class="reference" href="#Column"
     title="Column = object
   name*: string
   case kind*: ColKind
   of StrCol:
       stripQuotes: bool
+
+  of DateCol:
+      format: string
 
   else:
       nil"><wbr />Column<span class="attachedType" style="visibility:hidden"></span></a></li>
@@ -1237,6 +1240,8 @@ function main() {
   <ul class="simple simple-toc-section">
       <li><a class="reference" href="#col,ColKind,string"
     title="col(kind: ColKind; name: string): Column"><wbr />col<span class="attachedType" style="visibility:hidden">ColKind</span></a></li>
+  <li><a class="reference" href="#dateCol,string,string"
+    title="dateCol(name: string; format: string = &quot;yyyy-MM-dd&quot;): Column"><wbr />date<wbr />Col<span class="attachedType" style="visibility:hidden">Column</span></a></li>
 
   </ul>
 </li>
@@ -1270,19 +1275,19 @@ function main() {
   <div class="section" id="6">
 <h1><a class="toc-backref" href="#6">Imports</a></h1>
 <dl class="item">
-<a class="reference external" href="macros.html">macros</a>, <a class="reference external" href="strutils.html">strutils</a>, <a class="reference external" href="parseutils.html">parseutils</a>
+<a class="reference external" href="macros.html">macros</a>, <a class="reference external" href="strutils.html">strutils</a>, <a class="reference external" href="parseutils.html">parseutils</a>, <a class="reference external" href="times.html">times</a>
 </dl></div>
 <div class="section" id="7">
 <h1><a class="toc-backref" href="#7">Types</a></h1>
 <dl class="item">
 <dt id="ColKind"><a name="ColKind"></a><pre><span class="Identifier">ColKind</span> <span class="Other">=</span> <span class="Keyword">enum</span>
-  <span class="Identifier">StrCol</span><span class="Other">,</span> <span class="Identifier">IntCol</span><span class="Other">,</span> <span class="Identifier">FloatCol</span></pre></dt>
+  <span class="Identifier">StrCol</span><span class="Other">,</span> <span class="Identifier">IntCol</span><span class="Other">,</span> <span class="Identifier">FloatCol</span><span class="Other">,</span> <span class="Identifier">DateCol</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata/schema_parser.nim#L7"
+href="/tree/master/src/nimdata/schema_parser.nim#L8"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata/schema_parser.nim#L7" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata/schema_parser.nim#L8" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <dt id="Column"><a name="Column"></a><pre><span class="Identifier">Column</span> <span class="Other">=</span> <span class="Keyword">object</span>
@@ -1291,6 +1296,9 @@ class="link-seesrc" target="_blank">Source</a>
   <span class="Keyword">of</span> <span class="Identifier">StrCol</span><span class="Other">:</span>
       <span class="Identifier">stripQuotes</span><span class="Other">:</span> <span class="Identifier">bool</span>
 
+  <span class="Keyword">of</span> <span class="Identifier">DateCol</span><span class="Other">:</span>
+      <span class="Identifier">format</span><span class="Other">:</span> <span class="Identifier">string</span>
+
   <span class="Keyword">else</span><span class="Other">:</span>
       <span class="Keyword">nil</span>
 
@@ -1298,9 +1306,9 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata/schema_parser.nim#L11"
+href="/tree/master/src/nimdata/schema_parser.nim#L13"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata/schema_parser.nim#L11" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata/schema_parser.nim#L13" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 
@@ -1312,9 +1320,18 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata/schema_parser.nim#L19"
+href="/tree/master/src/nimdata/schema_parser.nim#L23"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata/schema_parser.nim#L19" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata/schema_parser.nim#L23" class="link-seesrc" target="_blank" >Edit</a>
+
+</dd>
+<dt id="dateCol"><a name="dateCol,string,string"></a><pre><span class="Keyword">proc</span> <span class="Identifier">dateCol</span><span class="Other">(</span><span class="Identifier">name</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">;</span> <span class="Identifier">format</span><span class="Other">:</span> <span class="Identifier">string</span> <span class="Other">=</span> <span class="StringLit">&quot;yyyy-MM-dd&quot;</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Column</span> <span class="Other pragmabegin">{.</span><div class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></div><span class="Other pragmaend">.}</span></pre></dt>
+<dd>
+
+&nbsp;&nbsp;<a
+href="/tree/master/src/nimdata/schema_parser.nim#L26"
+class="link-seesrc" target="_blank">Source</a>
+<a href="/edit/devel/src/nimdata/schema_parser.nim#L26" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 
@@ -1326,18 +1343,18 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 Creates a type corresponding to a given schema (the return type of the generated <tt class="docutils literal"><span class="pre">schemaParser</span></tt> proc).
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata/schema_parser.nim#L36"
+href="/tree/master/src/nimdata/schema_parser.nim#L42"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata/schema_parser.nim#L36" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata/schema_parser.nim#L42" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <dt id="schemaParser"><a name="schemaParser.m,,"></a><pre><span class="Keyword">macro</span> <span class="Identifier">schemaParser</span><span class="Other">[</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">schema</span><span class="Other">:</span> <span class="Keyword">static</span><span class="Other">[</span><span class="Identifier">openArray</span><span class="Other">[</span><span class="Identifier">Column</span><span class="Other">]</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">sep</span><span class="Other">:</span> <span class="Keyword">static</span><span class="Other">[</span><span class="Identifier">char</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">untyped</span></pre></dt>
 <dd>
 Creates a schema parser proc, which takes a <tt class="docutils literal"><span class="pre">string</span></tt> as input and returns a the parsing result as a tuple, with types corresponding to the given <tt class="docutils literal"><span class="pre">schema</span></tt>
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata/schema_parser.nim#L51"
+href="/tree/master/src/nimdata/schema_parser.nim#L58"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata/schema_parser.nim#L51" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata/schema_parser.nim#L58" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 
@@ -1349,18 +1366,18 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata/schema_parser.nim#L23"
+href="/tree/master/src/nimdata/schema_parser.nim#L29"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata/schema_parser.nim#L23" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata/schema_parser.nim#L29" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <dt id="skipOverWhitespace"><a name="skipOverWhitespace.t,untyped,untyped"></a><pre><span class="Keyword">template</span> <span class="Identifier">skipOverWhitespace</span><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">untyped</span><span class="Other">;</span> <span class="Identifier">i</span><span class="Other">:</span> <span class="Identifier">untyped</span><span class="Other">)</span></pre></dt>
 <dd>
 
 &nbsp;&nbsp;<a
-href="/tree/master/src/nimdata/schema_parser.nim#L31"
+href="/tree/master/src/nimdata/schema_parser.nim#L37"
 class="link-seesrc" target="_blank">Source</a>
-<a href="/edit/devel/src/nimdata/schema_parser.nim#L31" class="link-seesrc" target="_blank" >Edit</a>
+<a href="/edit/devel/src/nimdata/schema_parser.nim#L37" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 
@@ -1373,7 +1390,7 @@ class="link-seesrc" target="_blank">Source</a>
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br/>
-        <small>Made with Nim. Generated: 2017-02-21 21:46:10 UTC</small>
+        <small>Made with Nim. Generated: 2017-03-01 22:46:05 UTC</small>
       </div>
     </div>
   </div>
