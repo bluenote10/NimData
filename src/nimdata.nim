@@ -27,6 +27,7 @@ export `=>`
 import nimdata/io_gzip
 import nimdata/html
 import nimdata/utils
+import nimdata/tuples
 
 
 type
@@ -80,6 +81,10 @@ type
     data: seq[T]
     f: proc(x: T): U {.locks: 0.}
     order: SortOrder
+
+  JoinDataFrame[O: static[seq[string]], A, B, C] = ref object of DataFrame[C]
+    origA: DataFrame[A]
+    origB: DataFrame[B]
 
 # -----------------------------------------------------------------------------
 # Transformations
@@ -182,6 +187,16 @@ proc groupBy*[T, K, U](df: DataFrame[T], keyFunc: proc(x: T): K, reduceFunc: pro
     computed: false,
     data: initTable[K, seq[T]]()
   )
+
+
+proc join*[A, B](dfA: DataFrame[A], dfB: DataFrame[B], on: static[openarray[string]]): auto =
+  result = JoinDataFrame[on, A, B, determineType(A, B, on)](
+    origA: dfA,
+    origB: dfB
+  )
+
+proc joinTheta[A, B](dfA: DataFrame[A], dfB: DataFrame[B], on: (a: A, b: B) -> bool): auto =
+  discard
 
 # -----------------------------------------------------------------------------
 # Iterators
@@ -286,6 +301,11 @@ method iter*[T, K, U](df: GroupByReduceDataFrame[T, K, U]): (iterator(): U) =
       let dfGroup = CachedDataFrame[T](data: values) # TODO: avoid copying?
       let reduced = df.reduceFunc(key, dfGroup)
       yield reduced
+
+method iter*[O, A, B, C](df: JoinDataFrame[O, A, B, C]): (iterator(): C) =
+
+  result = iterator(): C =
+    discard
 
 
 # -----------------------------------------------------------------------------

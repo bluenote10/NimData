@@ -12,6 +12,8 @@ import test_UniqueDataFrame
 import test_ValueCountsDataFrame
 import test_SortDataFrame
 import test_GroupByReduceDataFrame
+import test_JoinDataFrame
+
 import test_non_generic_dataframes
 import test_indexed_transformations
 import test_actions

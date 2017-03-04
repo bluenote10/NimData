@@ -1,5 +1,6 @@
 import macros
 import sets
+import tables
 
 import utils
 
@@ -240,6 +241,130 @@ macro addField*(t: typed, field: untyped): untyped =
     result.add(
       newColonExpr(fieldName, fieldExpr)
     )
+
+
+proc extractFields(n: NimNode): OrderedTable[string, NimNode] =
+  # extract fields present in given tuple
+  result = initOrderedTable[string, NimNode]()
+  # echo n.treeRepr
+  for child in n.children:
+    if child.kind != nnkIdentDefs:
+      error "extractFields expects a tuple or object, consisting of nnkIdentDefs children."
+    else:
+      let fname = child[0]
+      let ftype = child[1]
+      result[$fname] = ftype
+
+macro determineType*(ta, tb: typed, on: static[openarray[string]]): untyped =
+  # getTypeImpl returns something like:
+  # BracketExpr
+  #   Sym "typeDesc"
+  #   TupleTy
+  # So we need child at index 1 to get the tuple/object type
+  let fieldsA = extractFields(ta.getTypeImpl[1])
+  let fieldsB = extractFields(tb.getTypeImpl[1])
+  echo "Fields in A:"
+  for key, val in fieldsA:
+    echo "    ", key, " -> ", val.repr
+  echo "Fields in B:"
+  for key, val in fieldsB:
+    echo "    ", key, " -> ", val.repr
+
+  result = newNimNode(nnkTupleTy)
+  for field in on:
+    if not (field in fieldsA):
+      error "Operand A does not have required field: " & field
+    elif not (field in fieldsB):
+      error "Operand B does not have required field: " & field
+    elif fieldsA[field] != fieldsB[field]:
+      error "Operands do not have same type\n" &
+            "Type of field '" & field & "' in operand A: " & fieldsA[field].repr & "\n" &
+            "Type of field '" & field & "' in operand B: " & fieldsB[field].repr
+    else:
+      result.add(
+        newIdentDefs(name=ident(field), kind=fieldsA[field])
+      )
+
+  for field, ftype in fieldsA:
+    if not (field in on):
+      if field in fieldsB:
+        result.add(
+          newIdentDefs(name=ident(field & "_a"), kind=ftype)
+        )
+      else:
+        result.add(
+          newIdentDefs(name=ident(field), kind=ftype)
+        )
+
+  for field, ftype in fieldsB:
+    if not (field in on):
+      if field in fieldsA:
+        result.add(
+          newIdentDefs(name=ident(field & "_b"), kind=ftype)
+        )
+      else:
+        result.add(
+          newIdentDefs(name=ident(field), kind=ftype)
+        )
+
+macro joinTuple*(a: tuple, b: tuple, on: static[openarray[string]]): untyped =
+
+  let fieldsA = extractFields(a.getTypeImpl)
+  let fieldsB = extractFields(b.getTypeImpl)
+
+  result = newNimNode(nnkPar)
+  for field in on:
+    if not (field in fieldsA):
+      error "Operand A does not have required field: " & field
+    elif not (field in fieldsB):
+      error "Operand B does not have required field: " & field
+    elif fieldsA[field] != fieldsB[field]:
+      error "Operands do not have same type\n" &
+            "Type of field '" & field & "' in operand A: " & fieldsA[field].repr & "\n" &
+            "Type of field '" & field & "' in operand B: " & fieldsB[field].repr
+    else:
+      let dotExpr = newDotExpr(a, ident(field))
+      result.add(
+        newColonExpr(ident(field), dotExpr)
+      )
+
+  for field, ftype in fieldsA:
+    if not (field in on):
+      var fieldName = field
+      if field in fieldsB:
+        fieldName &= "_a"
+      let dotExpr = newDotExpr(a, ident(field))
+      result.add(
+        newColonExpr(ident(fieldName), dotExpr)
+      )
+
+  for field, ftype in fieldsB:
+    if not (field in on):
+      var fieldName = field
+      if field in fieldsA:
+        fieldName &= "_b"
+      let dotExpr = newDotExpr(b, ident(field))
+      result.add(
+        newColonExpr(ident(fieldName), dotExpr)
+      )
+  echo result.repr
+  
+macro tupleMatches*(a: tuple, b: tuple, on: static[openarray[string]]): untyped =
+  let fieldsA = extractFields(a.getTypeImpl)
+  let fieldsB = extractFields(b.getTypeImpl)
+  result = newNimNode(nnkPar)
+  for field in on:
+    if not (field in fieldsA):
+      error "Operand A does not have required field: " & field
+    elif not (field in fieldsB):
+      error "Operand B does not have required field: " & field
+    else:
+      let exprA = newDotExpr(a, ident(field))
+      let exprB = newDotExpr(b, ident(field))
+      result.add(
+        infix(exprA, "==", exprB)
+      )
+  # echo result.repr
 
 
 
