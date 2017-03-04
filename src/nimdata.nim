@@ -21,13 +21,19 @@ export schema_parser.ColKind
 export schema_parser.col
 export schema_parser.schema_parser
 
+import nimdata/tuples
+export tuples.joinTuple
+export tuples.projectTo
+export tuples.projectAway
+export tuples.addField
+export tuples.addFields
+
 export SortOrder
 export `=>`
 
 import nimdata/io_gzip
 import nimdata/html
 import nimdata/utils
-import nimdata/tuples
 
 
 type
@@ -82,9 +88,19 @@ type
     f: proc(x: T): U {.locks: 0.}
     order: SortOrder
 
+  #[
   JoinDataFrame[O: static[seq[string]], A, B, C] = ref object of DataFrame[C]
     origA: DataFrame[A]
     origB: DataFrame[B]
+  ]#
+
+  JoinThetaDataFrame[A, B, C] = ref object of DataFrame[C]
+    origA: DataFrame[A]
+    origB: DataFrame[B]
+    cmpFunc: proc(a: A, b: B): bool {.locks: 0.}
+    projectFunc: proc(a: A, b: B): C {.locks: 0.}
+    computed: bool
+    dataB: seq[B]
 
 # -----------------------------------------------------------------------------
 # Transformations
@@ -188,15 +204,26 @@ proc groupBy*[T, K, U](df: DataFrame[T], keyFunc: proc(x: T): K, reduceFunc: pro
     data: initTable[K, seq[T]]()
   )
 
-
+#[
 proc join*[A, B](dfA: DataFrame[A], dfB: DataFrame[B], on: static[openarray[string]]): auto =
   result = JoinDataFrame[on, A, B, determineType(A, B, on)](
     origA: dfA,
     origB: dfB
   )
+]#
 
-proc joinTheta[A, B](dfA: DataFrame[A], dfB: DataFrame[B], on: (a: A, b: B) -> bool): auto =
-  discard
+proc join*[A, B, C](dfA: DataFrame[A],
+                    dfB: DataFrame[B],
+                    cmpFunc: (a: A, b: B) -> bool,
+                    projectFunc: (a: A, b: B) -> C): DataFrame[C] =
+  result = JoinThetaDataFrame[A, B, C](
+    origA: dfA,
+    origB: dfB,
+    cmpFunc: cmpFunc,
+    projectFunc: projectFunc,
+    computed: false,
+    dataB: nil
+  )
 
 # -----------------------------------------------------------------------------
 # Iterators
@@ -302,11 +329,17 @@ method iter*[T, K, U](df: GroupByReduceDataFrame[T, K, U]): (iterator(): U) =
       let reduced = df.reduceFunc(key, dfGroup)
       yield reduced
 
-method iter*[O, A, B, C](df: JoinDataFrame[O, A, B, C]): (iterator(): C) =
+method iter*[A, B, C](df: JoinThetaDataFrame[A, B, C]): (iterator(): C) =
+  if not df.computed:
+    df.dataB = df.origB.collect()
 
   result = iterator(): C =
-    discard
-
+    var it = df.origA.iter()
+    for a in toIterBugfix(it):
+      for b in df.dataB:
+        let matches = df.cmpFunc(a, b)
+        if matches:
+          yield df.projectFunc(a, b)
 
 # -----------------------------------------------------------------------------
 # Actions

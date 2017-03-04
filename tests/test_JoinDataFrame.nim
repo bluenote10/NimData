@@ -10,8 +10,16 @@ UnitTestSuite("JoinDataFrame"):
     ])
 
     let dfB = DF.fromSeq(@[
-      (name: "A", height: 1.80)
+      (name: "A", height: 1.80),
+      (name: "A", height: 1.50),
+      (name: "B", height: 1.50),
     ])
 
-    let joined = dfA.join(dfB, @["name"])
+    let joined = join(
+      dfA,
+      dfB,
+      (a, b) => a.name == b.name,
+      (a, b) => joinTuple(a, b, ["name"])
+    )
+    joined.show()
 
