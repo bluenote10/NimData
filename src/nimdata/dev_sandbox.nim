@@ -3,23 +3,20 @@
 This file contains some internal dev notes/todos. Can be ignored...
 -------------------------------------------------------------------------------
 ]#
-import future
-import strutils
-import nimdata
-import utils
+import ../nimdata
 
 block:
   # would be nice to find a better solution than the echoGeneric
   # maybe by enhancing the upstream `=>`.
   const schema = [
-    col(StrCol, "index"),
-    col(StrCol, "homeTeam"),
-    col(StrCol, "awayTeam"),
-    col(IntCol, "homeGoals"),
-    col(IntCol, "awayGoals"),
-    col(IntCol, "round"),
-    col(IntCol, "year"),
-    col(StrCol, "date") # TODO: proper timestamp parsing
+    strCol("index"),
+    strCol("homeTeam"),
+    strCol("awayTeam"),
+    intCol("homeGoals"),
+    intCol("awayGoals"),
+    intCol("round"),
+    intCol("year"),
+    dateCol("date", format="yyyy-MM-dd hh:mm:ss")
   ]
   DF.fromFile("examples/Bundesliga.csv")
     .map(schemaParser(schema, ','))
