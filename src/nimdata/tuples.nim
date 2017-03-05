@@ -289,7 +289,7 @@ macro determineType*(ta, tb: typed, on: static[openarray[string]]): untyped =
     if not (field in on):
       if field in fieldsB:
         result.add(
-          newIdentDefs(name=ident(field & "_a"), kind=ftype)
+          newIdentDefs(name=ident(field & "A"), kind=ftype)
         )
       else:
         result.add(
@@ -300,14 +300,26 @@ macro determineType*(ta, tb: typed, on: static[openarray[string]]): untyped =
     if not (field in on):
       if field in fieldsA:
         result.add(
-          newIdentDefs(name=ident(field & "_b"), kind=ftype)
+          newIdentDefs(name=ident(field & "B"), kind=ftype)
         )
       else:
         result.add(
           newIdentDefs(name=ident(field), kind=ftype)
         )
 
-macro joinTuple*(a: tuple, b: tuple, on: static[openarray[string]]): untyped =
+macro mergeTuple*(a: tuple, b: tuple, on: static[openarray[string]]): untyped =
+  ## Merges the fields of a tuple ``a`` and ``b`` into a new named tuple.
+  ## The field names are merged using the logic:
+  ## - If a field occurs either in ``a`` or ``b``, the field is merged keeping
+  ##   its original name.
+  ## - If tuple ``a`` and ``b`` both have a field with the same name ``fieldName``,
+  ##   they will be renamed to ``fieldNameA`` and ``fieldNameB`` (if such
+  ##   a field already exists, there would be a compiler error).
+  ## - If ``a.fieldName`` and ``b.fieldName`` are referring to the same
+  ##   information (e.g. if ``fieldName`` is part of a join condition),
+  ##   the field duplication can be avoided by specifying the field in
+  ##   the on clause. In this case the result would only contain the
+  ##   field ``fieldName``, and the value is taked from tuple ``a``.
 
   let fieldsA = extractFields(a.getTypeImpl)
   let fieldsB = extractFields(b.getTypeImpl)
@@ -332,7 +344,7 @@ macro joinTuple*(a: tuple, b: tuple, on: static[openarray[string]]): untyped =
     if not (field in on):
       var fieldName = field
       if field in fieldsB:
-        fieldName &= "_a"
+        fieldName &= "A"
       let dotExpr = newDotExpr(a, ident(field))
       result.add(
         newColonExpr(ident(fieldName), dotExpr)
@@ -342,13 +354,13 @@ macro joinTuple*(a: tuple, b: tuple, on: static[openarray[string]]): untyped =
     if not (field in on):
       var fieldName = field
       if field in fieldsA:
-        fieldName &= "_b"
+        fieldName &= "B"
       let dotExpr = newDotExpr(b, ident(field))
       result.add(
         newColonExpr(ident(fieldName), dotExpr)
       )
   echo result.repr
-  
+
 macro tupleMatches*(a: tuple, b: tuple, on: static[openarray[string]]): untyped =
   let fieldsA = extractFields(a.getTypeImpl)
   let fieldsB = extractFields(b.getTypeImpl)

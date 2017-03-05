@@ -19,7 +19,7 @@ UnitTestSuite("JoinDataFrame"):
       dfA,
       dfB,
       (a, b) => a.name == b.name,
-      (a, b) => joinTuple(a, b, ["name"])
+      (a, b) => mergeTuple(a, b, ["name"])
     )
     joined.show()
 

@@ -1,3 +1,25 @@
+## NimData's core data type is a generic ``DataFrame[T]``. The methods
+## of a data frame can be categorized into generalizations
+## of the Map/Reduce concept:
+##
+## - **Transformations**: Operations like ``map`` or ``filter`` transform one data
+##   frame into another. Transformations are lazy and can be chained. They will only
+##   be executed once an action is called.
+## - **Actions**: Operations like ``count``, ``min``, ``max``, ``sum``, ``reduce``, ``fold``, ``collect``, or ``show``
+##   perform an aggregation of a data frame, and trigger the processing pipeline.
+##
+## NimData is structured into the following submodules:
+##
+## - `nimdata/schema_parser <nimdata/schema_parser.html>`_ containing functions/macros for
+##   static schema parsing.
+## - `nimdata/tuples <nimdata/tuples.html>`_ containing functions/macros for transforming
+##   tuples.
+## - `nimdata/utils <nimdata/utils.html>`_ containing miscellaneous utils.
+##
+## This main module re-exports some symbols of these modules for convenience, so that
+## ``import nimdata`` is sufficient in most cases.
+##
+
 import future
 import typetraits
 import macros
@@ -22,7 +44,7 @@ export schema_parser.col
 export schema_parser.schema_parser
 
 import nimdata/tuples
-export tuples.joinTuple
+export tuples.mergeTuple
 export tuples.projectTo
 export tuples.projectAway
 export tuples.addField
@@ -216,6 +238,11 @@ proc join*[A, B, C](dfA: DataFrame[A],
                     dfB: DataFrame[B],
                     cmpFunc: (a: A, b: B) -> bool,
                     projectFunc: (a: A, b: B) -> C): DataFrame[C] =
+  ## Performs on inner join of two data frames based on the given
+  ## ``cmpFunc``. The result can be arbitrarily merged using the
+  ## ``projectFunc``. When working with named tuples, the macro
+  ## `mergeTuple <nimdata/tuples.html#mergeTuple>`_ can be used as
+  ## a convenient way to merge the fields of tuple `A` and `B`.
   result = JoinThetaDataFrame[A, B, C](
     origA: dfA,
     origB: dfB,
@@ -602,7 +629,7 @@ proc fromSeq*[T](dfc: DataFrameContext, data: seq[T]): DataFrame[T] =
 # -----------------------------------------------------------------------------
 # Range
 type
-  RangeDataFrame* = ref object of DataFrame[int]
+  RangeDataFrame = ref object of DataFrame[int]
     indexFrom, indexUpto: int
 
 proc fromRange*(dfc: DataFrameContext, indexFrom: int, indexUpto: int): DataFrame[int] =
@@ -632,7 +659,7 @@ method iter*(df: RangeDataFrame): (iterator(): int) =
 # -----------------------------------------------------------------------------
 # FileRows (uncompressed)
 type
-  FileRowsDataFrame* = ref object of DataFrame[string]
+  FileRowsDataFrame = ref object of DataFrame[string]
     filename: string
     hasHeader: bool
 
@@ -649,7 +676,7 @@ method iter*(df: FileRowsDataFrame): (iterator(): string) =
 # -----------------------------------------------------------------------------
 # FileRows (gzip)
 type
-  FileRowsGZipDataFrame* = ref object of DataFrame[string]
+  FileRowsGZipDataFrame = ref object of DataFrame[string]
     filename: string
     hasHeader: bool
 
