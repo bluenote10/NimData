@@ -52,4 +52,8 @@ cache:
 branches:
   except:
     - gh-pages
+notifications:
+  email:
+    recipients:
+      - contact@zentabs.com
 
