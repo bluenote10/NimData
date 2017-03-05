@@ -3,7 +3,7 @@ import nimdata/utils
 import strutils
 
 UnitTestSuite("JoinDataFrame"):
-  test "Construction":
+  test "join":
 
     let dfA = DF.fromSeq(@[
       (name: "A", age: 99)
@@ -21,5 +21,8 @@ UnitTestSuite("JoinDataFrame"):
       (a, b) => a.name == b.name,
       (a, b) => mergeTuple(a, b, ["name"])
     )
-    joined.show()
+    check joined.collect() == @[
+      (name: "A", age: 99, height: 1.80),
+      (name: "A", age: 99, height: 1.50),
+    ]
 

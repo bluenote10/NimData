@@ -406,10 +406,31 @@ is much slower (with > 3 sec) while it reaches run times of 0.6 sec in the last 
 
 ## Next steps
 
-- More transformation and actions (~~flatMap~~, ~~groupBy~~, ~~join~~, union, window)
-- More data formats/sources (~~gzipped csv~~, parquet, S3)
-- REPL or Jupyter kernel
-- Plotting (maybe in the form of Bokeh bindings)
+- More transformations:
+  - [x] map
+  - [x] filter
+  - [x] flatMap
+  - [x] sort
+  - [x] unique
+  - [x] valueCounts
+  - [x] groupBy (reduce)
+  - [ ] groupBy (transform)
+  - [x] join (inner)
+  - [ ] join (outer)
+  - [ ] concat/union
+  - [ ] window
+- More actions:
+  - [x] numerical aggergations (count, min, max, sum, mean)
+  - [x] collect
+  - [x] show
+  - [x] openInBrowser
+- More data formats/sources
+  - [x] csv
+  - [x] gzipped csv
+  - [ ] parquet
+  - [ ] S3
+- REPL or Jupyter kernel?
+- Plotting (maybe in the form of Bokeh bindings)?
 
 ## License
 

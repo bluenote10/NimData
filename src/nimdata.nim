@@ -243,6 +243,10 @@ proc join*[A, B, C](dfA: DataFrame[A],
   ## ``projectFunc``. When working with named tuples, the macro
   ## `mergeTuple <nimdata/tuples.html#mergeTuple>`_ can be used as
   ## a convenient way to merge the fields of tuple `A` and `B`.
+  ## The current implementation caches ``dfB`` internally. Thus,
+  ## when joining a large and a small data frame, make sure that
+  ## the left (``dfA``) is the large one and the right (``dfB``)
+  ## is the smaller one.
   result = JoinThetaDataFrame[A, B, C](
     origA: dfA,
     origB: dfB,
