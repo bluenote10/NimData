@@ -2,10 +2,7 @@
 
 file=src/nimdata.nim
 
-fileAbs=`readlink -m $file`
-traceback=false
-
 cd `dirname $0`
 mkdir -p docs
-nim doc2 --project -o:./docs/ $file # -o:./bin/tests
+nim doc2 --project --docSeeSrcUrl:https://github.com/bluenote10/NimData/blob/master -o:./docs/ $file # -o:./bin/tests
 
