@@ -66,6 +66,7 @@ proc example02*() =
   ]
   let df = DF.fromFile("examples/Bundesliga.csv")
              .map(schemaParser(schema, ','))
+             .map(record => record.projectAway(index))
              .cache()
 
   # Check number of rows again
@@ -78,6 +79,7 @@ proc example02*() =
   # (will read the file from scratch):
   DF.fromFile("examples/Bundesliga.csv")
     .map(schemaParser(schema, ','))
+    .map(record => record.projectAway(index))
     .take(5)
     .show()
 
@@ -121,13 +123,10 @@ proc example02*() =
   echo df.map(record => record.homeTeam).unique().count()
 
   # Using unique with multiple dimensions:
-  df.map(record => (record.homeTeam, record.awayTeam)).unique().take(5).show()
+  df.map(record => record.projectTo(homeTeam, awayTeam)).unique().take(5).show()
 
   # Let's find the most frequent results by using `valueCounts`
-  df.map(record => (
-      homeGoals: record.homeGoals,
-      awayGoals: record.awayGoals
-    ))
+  df.map(record => record.projectTo(homeGoals, awayGoals))
     .valueCounts()
     .sort(x => x.count, SortOrder.Descending)
     .map(x => (

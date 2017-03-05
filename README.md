@@ -93,8 +93,24 @@ const schema = [
   dateCol("date", format="yyyy-MM-dd hh:mm:ss")
 ]
 let df = dfRawText.map(schemaParser(schema, ','))
+                  .map(record => record.projectAway(index))
                   .cache()
 ```
+
+What happens here, is that the `schemaParser` macro constructs a specialized parsing function,
+which takes a string as input and returns a named tuple with fields corresponding to the schema
+definition. The resulting tuple would for instance have a field `record.homeGoals` of type `int64`.
+
+A first benefit of having a compile-time schema is that the parser can produce highly
+optimized machine code, resulting in a very fast parsing performance.
+
+Note that our files contains a date column, which uses a non-standard date format. This can be
+handled by specifying an appropriate date format string. For some reason, the file also contains
+an `index` column which is rather boring (technically it's a quoted string of integer indices).
+We can get rid of the column by using the `projectAway` macro. In general this macro can be used
+to transform a tuple/schema into a reduced version with certain columns removed.
+Other useful type-safe schema transformation macros are `projectTo`, which instead _keeps_ certain fields,
+and `addFields`, which extends the tuple/schema by new fields.
 
 We can perform the same checks as before, but this time the data frame
 contains the parsed tuples:
@@ -105,15 +121,15 @@ echo df.count()
 
 df.take(5).show()
 # =>
-# +------------+------------+------------+------------+------------+------------+------------+------------+
-# | index      | homeTeam   | awayTeam   |  homeGoals |  awayGoals |      round |       year | date       |
-# +------------+------------+------------+------------+------------+------------+------------+------------+
-# | "1"        | "Werder B… | "Borussia… |          3 |          2 |          1 |       1963 | 1963-08-2… |
-# | "2"        | "Hertha B… | "1. FC Nu… |          1 |          1 |          1 |       1963 | 1963-08-2… |
-# | "3"        | "Preussen… | "Hamburge… |          1 |          1 |          1 |       1963 | 1963-08-2… |
-# | "4"        | "Eintrach… | "1. FC Ka… |          1 |          1 |          1 |       1963 | 1963-08-2… |
-# | "5"        | "Karlsruh… | "Meideric… |          1 |          4 |          1 |       1963 | 1963-08-2… |
-# +------------+------------+------------+------------+------------+------------+------------+------------+
+# +------------+------------+------------+------------+------------+------------+------------+
+# | homeTeam   | awayTeam   |  homeGoals |  awayGoals |      round |       year | date       |
+# +------------+------------+------------+------------+------------+------------+------------+
+# | "Werder B… | "Borussia… |          3 |          2 |          1 |       1963 | 1963-08-2… |
+# | "Hertha B… | "1. FC Nu… |          1 |          1 |          1 |       1963 | 1963-08-2… |
+# | "Preussen… | "Hamburge… |          1 |          1 |          1 |       1963 | 1963-08-2… |
+# | "Eintrach… | "1. FC Ka… |          1 |          1 |          1 |       1963 | 1963-08-2… |
+# | "Karlsruh… | "Meideric… |          1 |          4 |          1 |       1963 | 1963-08-2… |
+# +------------+------------+------------+------------+------------+------------+------------+
 ```
 
 Note that instead of starting the pipeline from `dfRawText` and using
@@ -122,6 +138,7 @@ caching, we could always write the pipeline from scratch:
 ```nimrod
 DF.fromFile("examples/Bundesliga.csv")
   .map(schemaParser(schema, ','))
+  .map(record => record.projectAway(index))
   .take(5)
   .show()
 ```
@@ -139,15 +156,15 @@ df.filter(record =>
   .take(5)
   .show()
 # =>
-# +------------+------------+------------+------------+------------+------------+------------+------------+
-# | index      | homeTeam   | awayTeam   |  homeGoals |  awayGoals |      round |       year | date       |
-# +------------+------------+------------+------------+------------+------------+------------+------------+
-# | "9128"     | "Bayern M… | "SC Freib… |          3 |          1 |          1 |       1993 | 1993-08-0… |
-# | "9135"     | "SC Freib… | "Wattensc… |          4 |          1 |          2 |       1993 | 1993-08-1… |
-# | "9147"     | "Borussia… | "SC Freib… |          3 |          2 |          3 |       1993 | 1993-08-2… |
-# | "9150"     | "SC Freib… | "Hamburge… |          0 |          1 |          4 |       1993 | 1993-08-2… |
-# | "9164"     | "1. FC Ko… | "SC Freib… |          2 |          0 |          5 |       1993 | 1993-09-0… |
-# +------------+------------+------------+------------+------------+------------+------------+------------+
+# +------------+------------+------------+------------+------------+------------+------------+
+# | homeTeam   | awayTeam   |  homeGoals |  awayGoals |      round |       year | date       |
+# +------------+------------+------------+------------+------------+------------+------------+
+# | "Bayern M… | "SC Freib… |          3 |          1 |          1 |       1993 | 1993-08-0… |
+# | "SC Freib… | "Wattensc… |          4 |          1 |          2 |       1993 | 1993-08-1… |
+# | "Borussia… | "SC Freib… |          3 |          2 |          3 |       1993 | 1993-08-2… |
+# | "SC Freib… | "Hamburge… |          0 |          1 |          4 |       1993 | 1993-08-2… |
+# | "1. FC Ko… | "SC Freib… |          2 |          0 |          5 |       1993 | 1993-09-0… |
+# +------------+------------+------------+------------+------------+------------+------------+
 ```
 
 Or search for games with many home goals:
@@ -156,16 +173,16 @@ Or search for games with many home goals:
 df.filter(record => record.homeGoals >= 10)
   .show()
 # =>
-# +------------+------------+------------+------------+------------+------------+------------+------------+
-# | index      | homeTeam   | awayTeam   |  homeGoals |  awayGoals |      round |       year | date       |
-# +------------+------------+------------+------------+------------+------------+------------+------------+
-# | "944"      | "Borussia… | "Schalke … |         11 |          0 |         18 |       1966 | 1967-01-0… |
-# | "1198"     | "Borussia… | "Borussia… |         10 |          0 |         12 |       1967 | 1967-11-0… |
-# | "2456"     | "Bayern M… | "Borussia… |         11 |          1 |         16 |       1971 | 1971-11-2… |
-# | "4457"     | "Borussia… | "Borussia… |         12 |          0 |         34 |       1977 | 1978-04-2… |
-# | "5788"     | "Borussia… | "Arminia … |         11 |          1 |         12 |       1982 | 1982-11-0… |
-# | "6364"     | "Borussia… | "Eintrach… |         10 |          0 |          8 |       1984 | 1984-10-1… |
-# +------------+------------+------------+------------+------------+------------+------------+------------+
+# +------------+------------+------------+------------+------------+------------+------------+
+# | homeTeam   | awayTeam   |  homeGoals |  awayGoals |      round |       year | date       |
+# +------------+------------+------------+------------+------------+------------+------------+
+# | "Borussia… | "Schalke … |         11 |          0 |         18 |       1966 | 1967-01-0… |
+# | "Borussia… | "Borussia… |         10 |          0 |         12 |       1967 | 1967-11-0… |
+# | "Bayern M… | "Borussia… |         11 |          1 |         16 |       1971 | 1971-11-2… |
+# | "Borussia… | "Borussia… |         12 |          0 |         34 |       1977 | 1978-04-2… |
+# | "Borussia… | "Arminia … |         11 |          1 |         12 |       1982 | 1982-11-0… |
+# | "Borussia… | "Eintrach… |         10 |          0 |          8 |       1984 | 1984-10-1… |
+# +------------+------------+------------+------------+------------+------------+------------+
 ```
 
 Note that we can now fully benefit from type-safety:
@@ -216,11 +233,11 @@ let maxDiff = df.map(record => (record.homeGoals - record.awayGoals).abs).max()
 df.filter(record => (record.homeGoals - record.awayGoals) == maxDiff)
   .show()
 # =>
-# +------------+------------+------------+------------+------------+------------+------------+------------+
-# | index      | homeTeam   | awayTeam   |  homeGoals |  awayGoals |      round |       year | date       |
-# +------------+------------+------------+------------+------------+------------+------------+------------+
-# | "4457"     | "Borussia… | "Borussia… |         12 |          0 |         34 |       1977 | 1978-04-2… |
-# +------------+------------+------------+------------+------------+------------+------------+------------+
+# +------------+------------+------------+------------+------------+------------+------------+
+# | homeTeam   | awayTeam   |  homeGoals |  awayGoals |      round |       year | date       |
+# +------------+------------+------------+------------+------------+------------+------------+
+# | "Borussia… | "Borussia… |         12 |          0 |         34 |       1977 | 1978-04-2… |
+# +------------+------------+------------+------------+------------+------------+------------+
 ```
 
 ### Sorting
@@ -235,15 +252,15 @@ df.sort(record => record.awayGoals, SortOrder.Descending)
   .take(5)
   .show()
 # =>
-# +------------+------------+------------+------------+------------+------------+------------+------------+
-# | index      | homeTeam   | awayTeam   |  homeGoals |  awayGoals |      round |       year | date       |
-# +------------+------------+------------+------------+------------+------------+------------+------------+
-# | "720"      | "Tasmania… | "Meideric… |          0 |          9 |         27 |       1965 | 1966-03-2… |
-# | "740"      | "Borussia… | "TSV 1860… |          1 |          9 |         29 |       1965 | 1966-04-1… |
-# | "11181"    | "SSV Ulm"  | "Bayer Le… |          1 |          9 |         25 |       1999 | 2000-03-1… |
-# | "4128"     | "Rot-Weis… | "Eintrach… |          1 |          8 |         32 |       1976 | 1977-05-0… |
-# | "10735"    | "Borussia… | "Bayer Le… |          2 |          8 |         10 |       1998 | 1998-10-3… |
-# +------------+------------+------------+------------+------------+------------+------------+------------+
+# +------------+------------+------------+------------+------------+------------+------------+
+# | homeTeam   | awayTeam   |  homeGoals |  awayGoals |      round |       year | date       |
+# +------------+------------+------------+------------+------------+------------+------------+
+# | "Tasmania… | "Meideric… |          0 |          9 |         27 |       1965 | 1966-03-2… |
+# | "Borussia… | "TSV 1860… |          1 |          9 |         29 |       1965 | 1966-04-1… |
+# | "SSV Ulm"  | "Bayer Le… |          1 |          9 |         25 |       1999 | 2000-03-1… |
+# | "Rot-Weis… | "Eintrach… |          1 |          8 |         32 |       1976 | 1977-05-0… |
+# | "Borussia… | "Bayer Le… |          2 |          8 |         10 |       1998 | 1998-10-3… |
+# +------------+------------+------------+------------+------------+------------+------------+
 ```
 
 ### Unique values
@@ -262,13 +279,13 @@ a one-dimensional series and multi-dimensional data frame (`unique` vs `drop_dup
 a data frame of unique pairs:
 
 ```nimrod
-df.map(record => (record.homeTeam, record.awayTeam))
+df.map(record => record.projectTo(homeTeam, awayTeam))
   .unique()
   .take(5)
   .show()
 # =>
 # +------------+------------+
-# | Field0     | Field1     |
+# | homeTeam   | awayTeam   |
 # +------------+------------+
 # | "Werder B… | "Borussia… |
 # | "Hertha B… | "1. FC Nu… |
@@ -289,10 +306,7 @@ In our example, we can use `valueCounts()` for instance to find the most
 frequent results in German soccer:
 
 ```nimrod
-df.map(record => (
-    homeGoals: record.homeGoals,
-    awayGoals: record.awayGoals
-  ))
+df.map(record => record.projectTo(homeGoals, awayGoals))
   .valueCounts()
   .sort(x => x.count, SortOrder.Descending)
   .map(x => (
