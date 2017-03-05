@@ -42,7 +42,7 @@ script:
     - |
       nimble install -y
       nimble list -i
-      nimble test -y
+      nimble tests -y
     # Optional: build docs.
     # - nim doc --docSeeSrcUrl:https://github.com/AUTHOR/MYPROJECT/blob/master --project MYFILE.nim
 cache:

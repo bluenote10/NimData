@@ -38,9 +38,10 @@ import sets
 import tables
 
 import nimdata/schema_parser
-export schema_parser.Column
-export schema_parser.ColKind
-export schema_parser.col
+export schema_parser.strCol
+export schema_parser.intCol
+export schema_parser.floatCol
+export schema_parser.dateCol
 export schema_parser.schema_parser
 
 import nimdata/tuples

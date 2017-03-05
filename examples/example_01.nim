@@ -14,8 +14,8 @@ proc example01*() =
       "Moe;58",
   ]
   const schema = [
-    col(StrCol, "name"),
-    col(IntCol, "age")
+    strCol("name"),
+    intCol("age")
   ]
 
   let df = DF.fromSeq(input)
@@ -55,14 +55,14 @@ proc example02*() =
   # our data set is small and we want to perform multiple operations on it,
   # it makes sense to load the parsing result into memory by using `cache`.
   const schema = [
-    col(StrCol, "index"),
-    col(StrCol, "homeTeam"),
-    col(StrCol, "awayTeam"),
-    col(IntCol, "homeGoals"),
-    col(IntCol, "awayGoals"),
-    col(IntCol, "round"),
-    col(IntCol, "year"),
-    col(StrCol, "date") # TODO: proper timestamp parsing
+    strCol("index"),
+    strCol("homeTeam"),
+    strCol("awayTeam"),
+    intCol("homeGoals"),
+    intCol("awayGoals"),
+    intCol("round"),
+    intCol("year"),
+    dateCol("date", format="yyyy-MM-dd hh:mm:ss")
   ]
   let df = DF.fromFile("examples/Bundesliga.csv")
              .map(schemaParser(schema, ','))

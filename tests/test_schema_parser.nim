@@ -46,9 +46,9 @@ UnitTestSuite("Schema parser"):
 
   test "Schema type definition":
     const schema = [
-      col(StrCol, "columnA"),
-      col(IntCol, "columnB"),
-      col(FloatCol, "columnC"),
+      strCol("columnA"),
+      intCol("columnB"),
+      floatCol("columnC"),
     ]
     type
       MyType = schemaType(schema)
@@ -63,9 +63,9 @@ UnitTestSuite("Schema parser"):
 
   test "Mixed columns":
     const schema = [
-      col(StrCol, "columnA"),
-      col(IntCol, "columnB"),
-      col(FloatCol, "columnC"),
+      strCol("columnA"),
+      intCol("columnB"),
+      floatCol("columnC"),
     ]
     let parser = schemaParser(schema, ';')
     let result = parser("1;2;3.5")
@@ -73,9 +73,9 @@ UnitTestSuite("Schema parser"):
 
   test "Mixed columns (different separator)":
     const schema = [
-      col(StrCol, "columnA"),
-      col(IntCol, "columnB"),
-      col(FloatCol, "columnC"),
+      strCol("columnA"),
+      intCol("columnB"),
+      floatCol("columnC"),
     ]
     let parser1 = schemaParser(schema, ',')
     let parser2 = schemaParser(schema, sep=',')
@@ -88,7 +88,7 @@ UnitTestSuite("Schema parser"):
 
   test "Pure string column (1)":
     const schema = [
-      col(StrCol, "columnA"),
+      strCol("columnA"),
     ]
     let parser = schemaParser(schema, ';')
     check:
@@ -100,8 +100,8 @@ UnitTestSuite("Schema parser"):
 
   test "Pure string column (2)":
     const schema = [
-      col(StrCol, "columnA"),
-      col(StrCol, "columnB"),
+      strCol("columnA"),
+      strCol("columnB"),
     ]
     let parser = schemaParser(schema, ';')
     check:
@@ -117,9 +117,9 @@ UnitTestSuite("Schema parser"):
 
   test "Pure string column (3)":
     const schema = [
-      col(StrCol, "columnA"),
-      col(StrCol, "columnB"),
-      col(StrCol, "columnC"),
+      strCol("columnA"),
+      strCol("columnB"),
+      strCol("columnC"),
     ]
     let parser = schemaParser(schema, ';')
     check:
@@ -133,7 +133,7 @@ UnitTestSuite("Schema parser"):
 
   test "Pure int column (1)":
     const schema = [
-      col(IntCol, "columnA"),
+      intCol("columnA"),
     ]
     let parser = schemaParser(schema, ';')
     check:
@@ -149,8 +149,8 @@ UnitTestSuite("Schema parser"):
 
   test "Pure int column (2)":
     const schema = [
-      col(IntCol, "columnA"),
-      col(IntCol, "columnB"),
+      intCol("columnA"),
+      intCol("columnB"),
     ]
     let parser = schemaParser(schema, ';')
     check:
@@ -159,9 +159,9 @@ UnitTestSuite("Schema parser"):
 
   test "Pure int column (3)":
     const schema = [
-      col(IntCol, "columnA"),
-      col(IntCol, "columnB"),
-      col(IntCol, "columnC"),
+      intCol("columnA"),
+      intCol("columnB"),
+      intCol("columnC"),
     ]
     let parser = schemaParser(schema, ';')
     check:
@@ -173,7 +173,7 @@ UnitTestSuite("Schema parser"):
 
   test "Pure float column (1)":
     const schema = [
-      col(FloatCol, "columnA"),
+      floatCol("columnA"),
     ]
     let parser = schemaParser(schema, ';')
     check:
@@ -187,8 +187,8 @@ UnitTestSuite("Schema parser"):
 
   test "Pure float column (2)":
     const schema = [
-      col(FloatCol, "columnA"),
-      col(FloatCol, "columnB"),
+      floatCol("columnA"),
+      floatCol("columnB"),
     ]
     let parser = schemaParser(schema, ';')
     check:
@@ -199,9 +199,9 @@ UnitTestSuite("Schema parser"):
 
   test "Pure float column (3)":
     const schema = [
-      col(FloatCol, "columnA"),
-      col(FloatCol, "columnB"),
-      col(FloatCol, "columnC"),
+      floatCol("columnA"),
+      floatCol("columnB"),
+      floatCol("columnC"),
     ]
     let parser = schemaParser(schema, ';')
     check:

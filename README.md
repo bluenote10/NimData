@@ -83,14 +83,14 @@ as an action.
 
 ```nimrod
 const schema = [
-  col(StrCol, "index"),
-  col(StrCol, "homeTeam"),
-  col(StrCol, "awayTeam"),
-  col(IntCol, "homeGoals"),
-  col(IntCol, "awayGoals"),
-  col(IntCol, "round"),
-  col(IntCol, "year"),
-  col(StrCol, "date") # proper timestamp parsing coming soon
+  strCol("index"),
+  strCol("homeTeam"),
+  strCol("awayTeam"),
+  intCol("homeGoals"),
+  intCol("awayGoals"),
+  intCol("round"),
+  intCol("year"),
+  dateCol("date", format="yyyy-MM-dd hh:mm:ss")
 ]
 let df = dfRawText.map(schemaParser(schema, ','))
                   .cache()

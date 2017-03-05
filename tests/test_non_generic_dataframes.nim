@@ -16,8 +16,8 @@ UnitTestSuite("Non-generic DataFrames"):
     check DF.fromFile("tests/data/mini.csv", FileType.RawText).count() == 5
     check DF.fromFile("tests/data/mini.csv", FileType.RawText, hasHeader=false).count() == 6
     const schema = [
-      col(StrCol, "name"),
-      col(IntCol, "age")
+      strCol("name"),
+      intCol("age")
     ]
     let df = DF.fromFile("tests/data/mini.csv", FileType.RawText).map(schemaParser(schema, ';'))
     check df.count() == 5
@@ -29,8 +29,8 @@ UnitTestSuite("Non-generic DataFrames"):
     check DF.fromFile("tests/data/mini.csv.gz", FileType.GZip).count() == 5
     check DF.fromFile("tests/data/mini.csv.gz", FileType.GZip, hasHeader=false).count() == 6
     const schema = [
-      col(StrCol, "name"),
-      col(IntCol, "age")
+      strCol("name"),
+      intCol("age")
     ]
     let df = DF.fromFile("tests/data/mini.csv.gz", FileType.GZip).map(schemaParser(schema, ';'))
     check df.count() == 5
@@ -43,8 +43,8 @@ UnitTestSuite("Non-generic DataFrames"):
       check DF.fromFile(file).count() == 5
       check DF.fromFile(file, hasHeader=false).count() == 6
       const schema = [
-        col(StrCol, "name"),
-        col(IntCol, "age")
+        strCol("name"),
+        intCol("age")
       ]
       let df = DF.fromFile(file).map(schemaParser(schema, ';'))
       check df.count() == 5

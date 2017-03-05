@@ -20,11 +20,18 @@ type
     else:
       discard
 
-proc col*(kind: ColKind, name: string): Column =
-  Column(kind: kind, name: name)
+proc strCol*(name: string): Column =
+  Column(kind: StrCol, name: name)
+
+proc intCol*(name: string): Column =
+  Column(kind: IntCol, name: name)
+
+proc floatCol*(name: string): Column =
+  Column(kind: FloatCol, name: name)
 
 proc dateCol*(name: string, format: string = "yyyy-MM-dd"): Column =
   Column(name: name, kind: DateCol, format: format)
+
 
 template skipPastSep*(s: untyped, i: untyped, hitEnd: untyped, sep: char) =
   while s[i] != sep and i < s.len:
@@ -103,7 +110,13 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
         substr(s, copyFrom, i-2)
       else:
         substr(s, copyFrom, s.len)
-    field = times.toTime(times.parse(s, format)) # TODO: handle exceptions
+    try:
+      field = times.toTime(times.parse(s, format))
+    except ValueError:
+      # TODO: more systematic logging/error reporting system
+      let e = getCurrentException()
+      field = times.Time(0)
+      echo "[WARNING] Failed to parse '" & s & "' as a time (" & e.msg & "). Setting value to " & times.`$`(field)
 
   template fragmentReadInt(field: untyped) =
     ## read int
