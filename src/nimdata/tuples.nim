@@ -359,7 +359,7 @@ macro mergeTuple*(a: tuple, b: tuple, on: static[openarray[string]]): untyped =
       result.add(
         newColonExpr(ident(fieldName), dotExpr)
       )
-  echo result.repr
+
 
 macro tupleMatches*(a: tuple, b: tuple, on: static[openarray[string]]): untyped =
   let fieldsA = extractFields(a.getTypeImpl)

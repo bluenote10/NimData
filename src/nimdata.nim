@@ -125,6 +125,14 @@ type
     computed: bool
     dataB: seq[B]
 
+  JoinEquiDataFrame[A, B, C, D] = ref object of DataFrame[D]
+    origA: DataFrame[A]
+    origB: DataFrame[B]
+    hashFuncA: proc(a: A): C {.locks: 0.}
+    hashFuncB: proc(b: B): C {.locks: 0.}
+    projectFunc: proc(a: A, b: B): D {.locks: 0.}
+    computed: bool
+    dataB: Table[C, seq[B]]
 
 # -----------------------------------------------------------------------------
 # Macros
@@ -144,6 +152,7 @@ template extractType*[T](df: DataFrame[T]): untyped =
 template inspectFields*[T](df: DataFrame[T]): untyped =
   var x: typedescToType(df.T)
   x
+
 
 # -----------------------------------------------------------------------------
 # Transformations
@@ -255,7 +264,7 @@ proc join*[A, B](dfA: DataFrame[A], dfB: DataFrame[B], on: static[openarray[stri
   )
 ]#
 
-proc join*[A, B, C](dfA: DataFrame[A],
+proc joinTheta*[A, B, C](dfA: DataFrame[A],
                     dfB: DataFrame[B],
                     cmpFunc: (a: A, b: B) -> bool,
                     projectFunc: (a: A, b: B) -> C): DataFrame[C] =
@@ -276,6 +285,67 @@ proc join*[A, B, C](dfA: DataFrame[A],
     computed: false,
     dataB: nil
   )
+
+proc joinEqui*[A, B, C, D](dfA: DataFrame[A],
+                           dfB: DataFrame[B],
+                           hashFuncA: (a: A) -> C,
+                           hashFuncB: (b: B) -> C,
+                           projectFunc: (a: A, b: B) -> D): DataFrame[D] =
+  ## Performs on inner join of two data frames based on the given
+  ## ``hashFuncA`` and ``hashFuncB``. The result can be arbitrarily merged using the
+  ## ``projectFunc``. When working with named tuples, the macro
+  ## `mergeTuple <nimdata/tuples.html#mergeTuple>`_ can be used as
+  ## a convenient way to merge the fields of tuple `A` and `B`.
+  ## The current implementation caches ``dfB`` internally. Thus,
+  ## when joining a large and a small data frame, make sure that
+  ## the left (``dfA``) is the large one and the right (``dfB``)
+  ## is the smaller one.
+  result = JoinEquiDataFrame[A, B, C, D](
+    origA: dfA,
+    origB: dfB,
+    hashFuncA: hashFuncA,
+    hashFuncB: hashFuncB,
+    projectFunc: projectFunc,
+    computed: false,
+    dataB: initTable[C, seq[B]]()
+  )
+
+macro join*[A, B](dfA: DataFrame[A],
+                  dfB: DataFrame[B],
+                  on: untyped): untyped =
+
+  if on.kind != nnkBracket:
+    error "join expects a bracket on clause. Type is " & $on.kind
+
+  let keyExprA = newPar()
+  for field in on:
+    let dotExpr = newDotExpr(ident "x", field)
+    keyExprA.add(dotExpr)
+  let keyFuncA = infix(ident "x", "=>", keyExprA)
+
+  let keyExprB = newPar()
+  for field in on:
+    let dotExpr = newDotExpr(ident "x", field)
+    keyExprB.add(dotExpr)
+  let keyFuncB = infix(ident "x", "=>", keyExprB)
+
+  var onAsString = newNimNode(nnkBracket)
+  for field in on:
+    onAsString.add(newStrLitNode($field))
+  var projectFunc = quote do:
+    (a, b) => mergeTuple(a, b, `onAsString`)
+  # get first child to unwrap the nnkStmtList
+  projectFunc = projectFunc[0]
+
+  result = newCall(
+    bindSym "joinEqui",
+    dfA,
+    dfB,
+    keyFuncA,
+    keyFuncB,
+    projectFunc
+  )
+
 
 # -----------------------------------------------------------------------------
 # Iterators
@@ -363,6 +433,7 @@ method iter*[T, U](df: SortDataFrame[T, U]): (iterator(): T) =
       (x, y) => cmp(df.f(x), df.f(y)),
       df.order
     )
+    df.computed = true
 
   result = iterator(): T =
     for x in df.data:
@@ -374,6 +445,7 @@ method iter*[T, K, U](df: GroupByReduceDataFrame[T, K, U]): (iterator(): U) =
     for x in toIterBugfix(it):
       let key = df.keyFunc(x)
       df.data.mgetOrPut(key, newSeq[T]()).add(x)
+    df.computed = true
 
   result = iterator(): U =
     for key, values in df.data.pairs:
@@ -384,6 +456,7 @@ method iter*[T, K, U](df: GroupByReduceDataFrame[T, K, U]): (iterator(): U) =
 method iter*[A, B, C](df: JoinThetaDataFrame[A, B, C]): (iterator(): C) =
   if not df.computed:
     df.dataB = df.origB.collect()
+    df.computed = true
 
   result = iterator(): C =
     var it = df.origA.iter()
@@ -391,6 +464,22 @@ method iter*[A, B, C](df: JoinThetaDataFrame[A, B, C]): (iterator(): C) =
       for b in df.dataB:
         let matches = df.cmpFunc(a, b)
         if matches:
+          yield df.projectFunc(a, b)
+
+method iter*[A, B, C, D](df: JoinEquiDataFrame[A, B, C, D]): (iterator(): D) =
+  if not df.computed:
+    var it = df.origB.iter()
+    for b in toIterBugfix(it):
+      let key = df.hashFuncB(b)
+      df.dataB.mgetOrPut(key, newSeq[B]()).add(b)
+    df.computed = true
+
+  result = iterator(): D =
+    var it = df.origA.iter()
+    for a in toIterBugfix(it):
+      let key = df.hashFuncA(a)
+      if key in df.dataB:
+        for b in df.dataB[key]:
           yield df.projectFunc(a, b)
 
 # -----------------------------------------------------------------------------
