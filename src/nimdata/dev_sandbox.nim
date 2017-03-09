@@ -58,7 +58,7 @@ when true:
   ]
   let df = DF.fromFile("examples/Bundesliga.csv")
              .map(schemaParser(schema, ','))
-             .map(x => x.projectAway(index))
+             #.map(x => x.projectAway(index))
              .map(x => addFields(x, goalDiff: x.homeGoals - x.awayGoals))
 
   type
