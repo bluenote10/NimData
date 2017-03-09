@@ -60,10 +60,10 @@ proc parserGeneratedV02*(s: string): tuple[floatA: float, floatB: float, intA: i
 
 proc runTestsCount() =
   const schema = [
-    col(FloatCol, "floatA"),
-    col(FloatCol, "floatB"),
-    col(IntCol, "intA"),
-    col(IntCol, "intB"),
+    floatCol("floatA"),
+    floatCol("floatB"),
+    intCol("intA"),
+    intCol("intB"),
   ]
 
   runTimed("Pure iteration"):
@@ -125,10 +125,10 @@ proc runTestsCount() =
 
 proc runTestsColumnAverages() =
   const schema = [
-    col(FloatCol, "floatA"),
-    col(FloatCol, "floatB"),
-    col(IntCol, "intA"),
-    col(IntCol, "intB"),
+    floatCol("floatA"),
+    floatCol("floatB"),
+    intCol("intA"),
+    intCol("intB"),
   ]
   runTimed("Column averages"):
     let df = DF.fromFile("test_01.csv")
@@ -142,10 +142,10 @@ proc runTestsColumnAverages() =
 
 proc runTestsUniqueValues() =
   const schema = [
-    col(FloatCol, "floatA"),
-    col(FloatCol, "floatB"),
-    col(IntCol, "intA"),
-    col(IntCol, "intB"),
+    floatCol("floatA"),
+    floatCol("floatB"),
+    intCol("intA"),
+    intCol("intB"),
   ]
 
   runTimed("Unique values 1", 3):
@@ -165,6 +165,28 @@ proc runTestsUniqueValues() =
     pipe.writeLine count
 
 
-runTestsCount()
-runTestsColumnAverages()
-runTestsUniqueValues()
+proc runTestsJoin() =
+  runTimed("Join", 3):
+    const schemaA = [
+      intCol("K1"),
+      intCol("K2"),
+      intCol("K3"),
+      floatCol("valA"),
+    ]
+    const schemaB = [
+      intCol("K1"),
+      intCol("K2"),
+      intCol("K3"),
+      floatCol("valB"),
+    ]
+    let dfA = DF.fromFile("test_02_a.csv").map(schemaParser(schemaA, ','))
+    let dfB = DF.fromFile("test_02_b.csv").map(schemaParser(schemaB, ','))
+
+    let joined = join(dfA, dfB, on=[K1, K2, K3])
+    echo joined.map(x => x.valA - x.valB).mean()
+
+
+#runTestsCount()
+#runTestsColumnAverages()
+#runTestsUniqueValues()
+runTestsJoin()

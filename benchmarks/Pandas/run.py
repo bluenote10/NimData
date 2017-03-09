@@ -59,6 +59,14 @@ def test_unique_values2():
     print(count)
 
 
+def test_join():
+    df_a = pd.read_csv("test_02_a.csv", header=None, names=["K1", "K2", "K3", "valA"])
+    df_b = pd.read_csv("test_02_b.csv", header=None, names=["K1", "K2", "K3", "valB"])
+    joined = df_a.merge(df_b, on=["K1", "K2", "K3"])
+    mean_diff = (joined["valA"] - joined["valB"]).mean()
+    print(mean_diff)
+
+
 result_strings = [
     run_timed(
         "Count (no parsing, pure Python)",
@@ -79,6 +87,10 @@ result_strings = [
     run_timed(
         "Unique values 2",
         test_unique_values2
+    ),
+    run_timed(
+        "Join",
+        test_join
     ),
 ]
 
