@@ -43,6 +43,11 @@ task tests, "Runs unit tests":
   # TODO: How can I ensure nimble installs deps before running this?
   withDir(thisDir()):
     runTest("tests/all.nim")
-    for f in iterateSourceFiles(thisDir()):
-      runTest(f)
+    runTest("src/nimdata/tuples.nim")
+    runTest("examples/example_01.nim")
+    runTest("examples/example_02.nim")
+
+    # This does currently not make sense, due to include only source files:
+    # for f in iterateSourceFiles(thisDir()):
+    #   runTest(f)
 

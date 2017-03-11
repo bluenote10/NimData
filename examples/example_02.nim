@@ -12,7 +12,7 @@ let dfB = DF.fromSeq(@[
   (name: "B", height: 1.50),
 ])
 
-let joined = join(
+let joined = joinTheta(
   dfA,
   dfB,
   (a, b) => a.name == b.name,
