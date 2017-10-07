@@ -588,7 +588,6 @@ proc show*[T: tuple](df: DataFrame[T], s: Stream = newFileStream(stdout)) =
 
   s.writeLine(separatorRowIntercepted(sizes, '+'))
 
-
 # -----------------------------------------------------------------------------
 # Actions (numerical)
 # -----------------------------------------------------------------------------
@@ -599,7 +598,7 @@ proc sum*[T](df: DataFrame[T]): T =
   for x in it():
     result += x
 
-proc mean*[T](df: DataFrame[T]): float =
+proc mean*[T: SomeNumber](df: DataFrame[T]): float =
   ## Computes the mean of a data frame of numerical type ``T``.
   result = 0f
   var count = 0
@@ -630,6 +629,17 @@ proc max*[T](df: DataFrame[T]): T =
   for x in it():
     if x > result:
       result = x
+
+proc median*[T: SomeNumber](df: DataFrame[T]): T =
+  ## Computes the median of a data frame of numerical type ``T``.
+  let dfSorted = df.sort()
+  let it = dfSorted.iter()
+  let values = toSeq(it())
+  let n = values.len
+  if n mod 2 == 0:
+    return (values[n div 2] + values[(n div 2) - 1]) / 2
+  else:
+    return values[n div 2]
 
 # -----------------------------------------------------------------------------
 # Actions (IO)
