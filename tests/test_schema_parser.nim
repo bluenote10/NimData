@@ -167,6 +167,17 @@ UnitTestSuite("Schema parser"):
     check:
       parser("0;0;0") == (columnA: 0i64, columnB: 0i64, columnC: 0i64)
 
+  test "Pure int column (parsers)":
+    const schema = [
+      intCol("columnBin", baseBin),
+      intCol("columnOct", baseOct),
+      intCol("columnDec", baseDec),
+      intCol("columnHex", baseHex),
+    ]
+    let parser = schemaParser(schema, ';')
+    check:
+      parser("0b01;0o123;1000;0xabcde") == (columnBin: 0b01i64, columnOct: 0o123i64, columnDec: 1000i64, columnHex: 0xabcdei64)
+
   # ---------------------------------------------------------------------------
   # float
   # ---------------------------------------------------------------------------
