@@ -39,6 +39,59 @@ proc floatCol*(name: string): Column =
 proc dateCol*(name: string, format: string = "yyyy-MM-dd"): Column =
   Column(name: name, kind: DateCol, format: format)
 
+proc parseBin[T: SomeSignedInt](s: string, number: var T, start = 0): int  {.
+  noSideEffect.} =
+  var i = start
+  var foundDigit = false
+  if s[i] == '0' and (s[i+1] == 'b' or s[i+1] == 'B'): inc(i, 2)
+  while true:
+    case s[i]
+    of '_': discard
+    of '0'..'1':
+      number = number shl 1 or (ord(s[i]) - ord('0'))
+      foundDigit = true
+    else: break
+    inc(i)
+  if foundDigit: result = i-start
+
+proc parseOct[T: SomeSignedInt](s: string, number: var T, start = 0): int  {.
+  noSideEffect.} =
+  var i = start
+  var foundDigit = false
+  if s[i] == '0' and (s[i+1] == 'o' or s[i+1] == 'O'): inc(i, 2)
+  while true:
+    case s[i]
+    of '_': discard
+    of '0'..'7':
+      number = number shl 3 or (ord(s[i]) - ord('0'))
+      foundDigit = true
+    else: break
+    inc(i)
+  if foundDigit: result = i-start
+
+proc parseHex[T: SomeSignedInt](s: string, number: var T, start = 0; maxLen = 0): int {.
+  noSideEffect.}  =
+  var i = start
+  var foundDigit = false
+  if s[i] == '0' and (s[i+1] == 'x' or s[i+1] == 'X'): inc(i, 2)
+  elif s[i] == '#': inc(i)
+  let last = if maxLen == 0: s.len else: i+maxLen
+  while i < last:
+    case s[i]
+    of '_': discard
+    of '0'..'9':
+      number = number shl 4 or (ord(s[i]) - ord('0'))
+      foundDigit = true
+    of 'a'..'f':
+      number = number shl 4 or (ord(s[i]) - ord('a') + 10)
+      foundDigit = true
+    of 'A'..'F':
+      number = number shl 4 or (ord(s[i]) - ord('A') + 10)
+      foundDigit = true
+    else: break
+    inc(i)
+  if foundDigit: result = i-start
+
 template skipPastSep*(s: untyped, i: untyped, hitEnd: untyped, sep: char) =
   while i < s.len and s[i] != sep:
     i += 1
