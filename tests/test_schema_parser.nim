@@ -1,4 +1,8 @@
-import sugar
+when useNimDevel:
+  import sugar
+else:
+  import future
+
 import strutils
 import math
 import times
