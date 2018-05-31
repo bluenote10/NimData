@@ -20,7 +20,13 @@
 ## ``import nimdata`` is sufficient in most cases.
 ##
 
-import sugar
+when NimMinor >= 18 and NimPatch > 0:
+  const useNimDevel*: bool = true
+  import sugar
+else:
+  const useNimDevel*: bool = false
+  import future
+
 import typetraits
 import macros
 
@@ -170,7 +176,10 @@ proc drop*[T](df: DataFrame[T], n: int): DataFrame[T] =
 proc sample*[T](df: DataFrame[T], probability: float): DataFrame[T] =
   ## Filters a data frame by applying Bernoulli sampling with the specified
   ## sampling ``probability``.
-  proc filter(x: T): bool = probability > rand(1.0)
+  when useNimDevel:
+    proc filter(x: T): bool = probability > rand(1.0)
+  else:
+    proc filter(x: T): bool = probability > random(1.0)
   result = FilteredDataFrame[T](orig: df, f: filter)
 
 proc flatMap*[U, T](df: DataFrame[U], f: proc(x: U): seq[T]): DataFrame[T] =

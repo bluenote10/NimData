@@ -1,6 +1,6 @@
 import macros
 import strutils
-
+from nimdata import useNimDevel
 
 # Inspired by Jehan's forum post
 proc `|`*(s: string, d: int): string =
@@ -44,7 +44,6 @@ proc fixedTruncateL*(s: string, maxLen: int): string =
   else:
     result = s
 
-
 macro debug*(n: varargs[typed]): untyped =
   # `n` is a Nim AST that contains the whole macro invocation
   # this macro returns a list of statements:
@@ -66,19 +65,27 @@ macro debug*(n: varargs[typed]): untyped =
   # add new line
   add(result, newCall("writeLine", newIdentNode("stdout"), newStrLitNode("")))
 
-macro showExpr*(arg: varargs[untyped]): untyped =
-  let argCallsite = arg[1]
-  result = newNimNode(nnkStmtList)
-  result.add(newCall("writeLine", newIdentNode("stdout"), argCallsite.toStrLit))
-  #result.add(newCall("write", newIdentNode("stdout"), newStrLitNode(" => ")))
-  result.add(newCall("writeLine", newIdentNode("stdout"), arg))
+when useNimDevel:
+  macro showExpr*(arg: varargs[untyped]): untyped =
+    let argCallsite = arg[1]
+else:
+  macro showExpr*(arg: typed): untyped =
+    let argCallsite = callsite()[1]
+    result = newNimNode(nnkStmtList)
+    result.add(newCall("writeLine", newIdentNode("stdout"), argCallsite.toStrLit))
+    #result.add(newCall("write", newIdentNode("stdout"), newStrLitNode(" => ")))
+    result.add(newCall("writeLine", newIdentNode("stdout"), arg))
 
-macro showStmt*(arg: varargs[untyped]): untyped =
-  let argCallsite = arg[1]
-  result = newNimNode(nnkStmtList)
-  result.add(newCall("writeLine", newIdentNode("stdout"), argCallsite.toStrLit))
-  #result.add(newCall("write", newIdentNode("stdout"), newStrLitNode(" => ")))
-  result.add(arg)
+when useNimDevel:
+  macro showStmt*(arg: varargs[untyped]): untyped =
+    let argCallsite = arg[1]
+else:
+  macro showStmt*(arg: typed): untyped =
+    let argCallsite = arg[1]
+    result = newNimNode(nnkStmtList)
+    result.add(newCall("writeLine", newIdentNode("stdout"), argCallsite.toStrLit))
+    #result.add(newCall("write", newIdentNode("stdout"), newStrLitNode(" => ")))
+    result.add(arg)
 
 template scope*(name: string, code: untyped): untyped =
   echo "\n *** ", name
