@@ -1,8 +1,3 @@
-when useNimDevel:
-  import sugar
-else:
-  import future
-
 import strutils
 import math
 import times
@@ -11,6 +6,10 @@ import nimdata
 import nimdata/utils
 import nimdata/schema_parser
 
+when useNimDevel:
+  import sugar
+else:
+  import future
 
 UnitTestSuite("Schema parser"):
   test "skipPastSep -- empty":
