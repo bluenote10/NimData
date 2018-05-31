@@ -66,15 +66,15 @@ macro debug*(n: varargs[typed]): untyped =
   # add new line
   add(result, newCall("writeLine", newIdentNode("stdout"), newStrLitNode("")))
 
-macro showExpr*(arg: untyped): untyped =
-  let argCallsite = callsite()[1]
+macro showExpr*(arg: varargs[untyped]): untyped =
+  let argCallsite = arg[1]
   result = newNimNode(nnkStmtList)
   result.add(newCall("writeLine", newIdentNode("stdout"), argCallsite.toStrLit))
   #result.add(newCall("write", newIdentNode("stdout"), newStrLitNode(" => ")))
   result.add(newCall("writeLine", newIdentNode("stdout"), arg))
 
-macro showStmt*(arg: untyped): untyped =
-  let argCallsite = callsite()[1]
+macro showStmt*(arg: varargs[untyped]): untyped =
+  let argCallsite = arg[1]
   result = newNimNode(nnkStmtList)
   result.add(newCall("writeLine", newIdentNode("stdout"), argCallsite.toStrLit))
   #result.add(newCall("write", newIdentNode("stdout"), newStrLitNode(" => ")))

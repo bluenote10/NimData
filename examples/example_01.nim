@@ -1,5 +1,5 @@
 
-import future
+import sugar
 import strutils
 import nimdata
 import nimdata/utils

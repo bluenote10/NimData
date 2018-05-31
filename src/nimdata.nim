@@ -20,7 +20,7 @@
 ## ``import nimdata`` is sufficient in most cases.
 ##
 
-import future
+import sugar
 import typetraits
 import macros
 
@@ -170,7 +170,7 @@ proc drop*[T](df: DataFrame[T], n: int): DataFrame[T] =
 proc sample*[T](df: DataFrame[T], probability: float): DataFrame[T] =
   ## Filters a data frame by applying Bernoulli sampling with the specified
   ## sampling ``probability``.
-  proc filter(x: T): bool = probability > random(1.0)
+  proc filter(x: T): bool = probability > rand(1.0)
   result = FilteredDataFrame[T](orig: df, f: filter)
 
 proc flatMap*[U, T](df: DataFrame[U], f: proc(x: U): seq[T]): DataFrame[T] =
@@ -757,7 +757,7 @@ proc fromRange*(dfc: DataFrameContext, indexUpto: int): DataFrame[int] =
 
 method iter*(df: RangeDataFrame): (iterator(): int) =
   result = iterator(): int =
-    for i in df.indexFrom .. <df.indexUpto:
+    for i in df.indexFrom..df.indexUpto:
       yield i
 
 

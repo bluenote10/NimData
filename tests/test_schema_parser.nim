@@ -1,4 +1,4 @@
-import future
+import sugar
 import strutils
 import math
 import times
@@ -218,10 +218,10 @@ UnitTestSuite("Schema parser"):
     check:
       parser("1.2;1.3;1.4") == (columnA: 1.2, columnB: 1.3, columnC: 1.4)
 
-proc constructDate(year, month, day: int): TimeInfo =
-  TimeInfo(year: year, month: (month-1).Month, monthday: day, isDst: true)
+proc constructDate(year, month, day: int): DateTime =
+  DateTime(year: year, month: (month-1).Month, monthday: day, isDst: true)
 
-proc equals(t: TimeInfo, year, month, day: int): bool =
+proc equals(t: DateTime, year, month, day: int): bool =
   result = (
     t.year == year and
     t.month == (month-1).Month and
