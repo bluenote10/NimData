@@ -237,6 +237,9 @@ UnitTestSuite("Schema parser -- date parsing"):
       dateCol("date")
     ]
     let parser = schemaParser(schema, ';')
-    check parser("2017-01-01").date.getLocalTime().equals(2017, 1, 1)
+    when useNimDevel:
+      check parser("2017-01-01").date.local().equals(2017, 1, 1)
+    else:
+      check parser("2017-01-01").date.getLocalTime().equals(2017, 1, 1)
 
 

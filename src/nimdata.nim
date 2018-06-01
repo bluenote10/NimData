@@ -533,11 +533,20 @@ proc echoGeneric*[T](x: T) {.procvar.} =
   ## Convenience to allow ``df.forEach(echoGeneric)``
   echo x
 
-proc show*[T: not tuple](df: DataFrame[T], s: Stream = newFileStream(stdout)) =
+proc show*[T: not tuple](df: DataFrame[T], s: Stream = nil) =
   ## Prints the content of the data frame using generic to string conversion.
   ## If no stream is specified, the output is written to ``stdout``.
+
+  var stream: Stream
+
+  if s.isNil:
+    stream = newFileStream(stdout)
+  else:
+    stream = s
+
   proc print(x: T) =
-    s.writeLine(x)
+    stream.writeLine(x)
+
   df.forEach(print)
 
 proc separatorRowIntercepted(sizes: seq[int], interceptor: char): string =
@@ -547,53 +556,59 @@ proc separatorRowIntercepted(sizes: seq[int], interceptor: char): string =
     result &= '-'.repeat(size + 2)
     result &= interceptor
 
-proc show*[T: tuple](df: DataFrame[T], s: Stream = newFileStream(stdout)) =
+proc show*[T: tuple](df: DataFrame[T], s: Stream = nil) =
   ## Prints the content of the data frame in the form of an ASCII table.
   ## If no stream is specified, the output is written to ``stdout``.
   var dummy: T
   var i = 0
   let fields = getFields(T)
   let sizes = 10.repeat(fields.len)
+  var stream: Stream
 
-  s.writeLine(separatorRowIntercepted(sizes, '+'))
+  if s.isNil:
+    stream = newFileStream(stdout)
+  else:
+    stream = s
+
+  stream.writeLine(separatorRowIntercepted(sizes, '+'))
 
   var totalLineWidth = 0
   for field, value in dummy.fieldPairs:
     if i == 0:
-      s.write("| ")
+      stream.write("| ")
       totalLineWidth += 2
     else:
-      s.write(" | ")
+      stream.write(" | ")
       totalLineWidth += 3
     when value is string:
       let strFormatted = field | -sizes[i]
     else:
       let strFormatted = field | +sizes[i]
-    s.write(fixedTruncateR(strFormatted, sizes[i]))
+    stream.write(fixedTruncateR(strFormatted, sizes[i]))
     totalLineWidth += sizes[i]
     i += 1
-  s.write(" |\n")
+  stream.write(" |\n")
   totalLineWidth += 2
 
-  s.writeLine(separatorRowIntercepted(sizes, '+'))
+  stream.writeLine(separatorRowIntercepted(sizes, '+'))
 
   let it = df.iter()
   for x in it():
     i = 0
     for field, value in x.fieldPairs():
       if i == 0:
-        s.write("| ")
+        stream.write("| ")
       else:
-        s.write(" | ")
+        stream.write(" | ")
       when value is string:
         let strFormatted = value | -sizes[i]
       else:
         let strFormatted = $value | +sizes[i]
-      s.write(fixedTruncateR(strFormatted, sizes[i]))
+      stream.write(fixedTruncateR(strFormatted, sizes[i]))
       i += 1
-    s.write(" |\n")
+    stream.write(" |\n")
 
-  s.writeLine(separatorRowIntercepted(sizes, '+'))
+  stream.writeLine(separatorRowIntercepted(sizes, '+'))
 
 # -----------------------------------------------------------------------------
 # Actions (numerical)
