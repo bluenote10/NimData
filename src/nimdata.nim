@@ -20,11 +20,12 @@
 ## ``import nimdata`` is sufficient in most cases.
 ##
 
-when NimMinor >= 18 and NimPatch > 0:
-  const useNimDevel*: bool = true
+const
+  useNimDevel*: bool = NimMinor >= 18 and NimPatch > 0
+
+when useNimDevel:
   import sugar
 else:
-  const useNimDevel*: bool = false
   import future
 
 import typetraits
@@ -336,7 +337,6 @@ macro join*[A, B](dfA: DataFrame[A],
     projectFunc
   )
 
-
 # -----------------------------------------------------------------------------
 # Iterators
 # -----------------------------------------------------------------------------
@@ -512,13 +512,11 @@ proc cache*[T](df: DataFrame[T]): DataFrame[T] = # TODO: want base method?
   let data = df.collect()
   result = CachedDataFrame[T](data: data)
 
-
 proc forEach*[T](df: DataFrame[T], f: proc(x: T): void) =
   ## Applies a function ``f`` to all elements of a data frame.
   let it = df.iter()
   for x in it():
     f(x)
-
 
 method collect*[T](df: DataFrame[T]): seq[T] {.base.} =
   ## Collects the content of a ``DataFrame[T]`` and returns it as ``seq[T]``.
@@ -766,7 +764,7 @@ proc fromRange*(dfc: DataFrameContext, indexUpto: int): DataFrame[int] =
 
 method iter*(df: RangeDataFrame): (iterator(): int) =
   result = iterator(): int =
-    for i in df.indexFrom..df.indexUpto:
+    for i in df.indexFrom..<df.indexUpto:
       yield i
 
 
