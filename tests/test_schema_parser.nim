@@ -6,7 +6,7 @@ import nimdata
 import nimdata/utils
 import nimdata/schema_parser
 
-when useNimDevel:
+when NimMinor >= 18 and NimPatch > 0:
   import sugar
 else:
   import future

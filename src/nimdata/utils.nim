@@ -1,6 +1,5 @@
 import macros
 import strutils
-from nimdata import useNimDevel
 
 # Inspired by Jehan's forum post
 proc `|`*(s: string, d: int): string =
@@ -65,8 +64,11 @@ macro debug*(n: varargs[typed]): untyped =
   # add new line
   add(result, newCall("writeLine", newIdentNode("stdout"), newStrLitNode("")))
 
-when useNimDevel:
+when NimMinor >= 18 and NimPatch > 0:
   macro showExpr*(arg: varargs[untyped]): untyped =
+    let argCallsite = arg[1]
+
+  macro showStmt*(arg: varargs[untyped]): untyped =
     let argCallsite = arg[1]
 else:
   macro showExpr*(arg: typed): untyped =
@@ -76,10 +78,6 @@ else:
     #result.add(newCall("write", newIdentNode("stdout"), newStrLitNode(" => ")))
     result.add(newCall("writeLine", newIdentNode("stdout"), arg))
 
-when useNimDevel:
-  macro showStmt*(arg: varargs[untyped]): untyped =
-    let argCallsite = arg[1]
-else:
   macro showStmt*(arg: typed): untyped =
     let argCallsite = arg[1]
     result = newNimNode(nnkStmtList)
@@ -91,7 +89,6 @@ template scope*(name: string, code: untyped): untyped =
   echo "\n *** ", name
   block:
     code
-
 
 proc seqAddr*[T](s: var seq[T]): ptr T =
   if s.len > 0:
@@ -105,7 +102,6 @@ proc getFields*(T: typedesc): seq[string] =
   for field, _ in x.fieldPairs:
     result.add(field)
 
-
 template UnitTestSuite*(name: string, code: untyped): untyped =
   when defined(testNimData):
     import unittest
@@ -118,4 +114,3 @@ template notCompiles*(e: untyped): untyped =
 template getSourcePath*(): string =
   let path = instantiationInfo(fullPaths=true)
   path.filename
-
