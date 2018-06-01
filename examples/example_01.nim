@@ -1,9 +1,6 @@
-
-import sugar
 import strutils
 import nimdata
 import nimdata/utils
-
 
 proc example01*() =
   let input = @[
