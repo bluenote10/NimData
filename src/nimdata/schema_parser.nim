@@ -174,7 +174,7 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
     except ValueError:
       # TODO: more systematic logging/error reporting system
       let e = getCurrentException()
-      field = times.Time(0)
+      field = times.Time()
       echo "[WARNING] Failed to parse '" & s & "' as a time (" & e.msg & "). Setting value to " & times.`$`(field)
 
   template fragmentReadIntBin(field: untyped) =
