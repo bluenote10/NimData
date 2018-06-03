@@ -91,9 +91,9 @@ proc parseHex[T: SomeSignedInt](s: string, number: var T, start = 0; maxLen = 0)
     else: break
     inc(i)
   if foundDigit: result = i-start
-  
+
 template skipPastSep*(s: untyped, i: untyped, hitEnd: untyped, sep: char) =
-  while s[i] != sep and i < s.len:
+  while i < s.len and s[i] != sep:
     i += 1
   if i == s.len:
     hitEnd = true
@@ -101,9 +101,8 @@ template skipPastSep*(s: untyped, i: untyped, hitEnd: untyped, sep: char) =
     i += 1
 
 template skipOverWhitespace*(s: untyped, i: untyped) =
-  while (s[i] == ' ' or s[i] == '\t') and i < s.len:
+  while  i < s.len and (s[i] == ' ' or s[i] == '\t'):
     i += 1
-
 
 macro schemaType*(schema: static[openarray[Column]]): untyped =
   ## Creates a type corresponding to a given schema (the return
@@ -119,7 +118,6 @@ macro schemaType*(schema: static[openarray[Column]]): untyped =
     result.add(
       newIdentDefs(name = newIdentNode(col.name), kind = typ)
     )
-
 
 macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyped =
   ## Creates a schema parser proc, which takes a ``string`` as input and
@@ -174,7 +172,11 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
     except ValueError:
       # TODO: more systematic logging/error reporting system
       let e = getCurrentException()
-      field = times.Time(0)
+
+      when NimMinor >= 18 and NimPatch > 0:
+        field = times.initTime(0, 0)
+      else:
+        field = times.Time(0)
       echo "[WARNING] Failed to parse '" & s & "' as a time (" & e.msg & "). Setting value to " & times.`$`(field)
 
   template fragmentReadIntBin(field: untyped) =
