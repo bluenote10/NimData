@@ -713,7 +713,7 @@ proc toHtml*[T: tuple|object](df: DataFrame[T], filename: string) =
     tableStr &= "<tr>"
     for field, value in x.fieldPairs():
       tableStr &= "<td>"
-      tableStr &= value
+      tableStr &= $value
       tableStr &= "</td>"
     tableStr &= "</tr>\n"
   tableStr &= "<tbody>\n"
