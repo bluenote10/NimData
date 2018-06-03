@@ -172,7 +172,6 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
     except ValueError:
       # TODO: more systematic logging/error reporting system
       let e = getCurrentException()
-
       when NimMinor >= 18 and NimPatch > 0:
         field = times.initTime(0, 0)
       else:
