@@ -93,7 +93,7 @@ proc parseHex[T: SomeSignedInt](s: string, number: var T, start = 0; maxLen = 0)
   if foundDigit: result = i-start
   
 template skipPastSep*(s: untyped, i: untyped, hitEnd: untyped, sep: char) =
-  while s[i] != sep and i < s.len:
+  while i < s.len and s[i] != sep:
     i += 1
   if i == s.len:
     hitEnd = true
