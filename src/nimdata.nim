@@ -20,7 +20,11 @@
 ## ``import nimdata`` is sufficient in most cases.
 ##
 
-import future
+when NimMinor >= 18 and NimPatch > 0:
+  import sugar
+else:
+  import future
+
 import typetraits
 import macros
 
@@ -170,7 +174,10 @@ proc drop*[T](df: DataFrame[T], n: int): DataFrame[T] =
 proc sample*[T](df: DataFrame[T], probability: float): DataFrame[T] =
   ## Filters a data frame by applying Bernoulli sampling with the specified
   ## sampling ``probability``.
-  proc filter(x: T): bool = probability > random(1.0)
+  when NimMinor >= 18 and NimPatch > 0:
+    proc filter(x: T): bool = probability > rand(1.0)
+  else:
+    proc filter(x: T): bool = probability > random(1.0)
   result = FilteredDataFrame[T](orig: df, f: filter)
 
 proc flatMap*[U, T](df: DataFrame[U], f: proc(x: U): seq[T]): DataFrame[T] =
@@ -326,7 +333,6 @@ macro join*[A, B](dfA: DataFrame[A],
     keyFuncB,
     projectFunc
   )
-
 
 # -----------------------------------------------------------------------------
 # Iterators
@@ -503,13 +509,11 @@ proc cache*[T](df: DataFrame[T]): DataFrame[T] = # TODO: want base method?
   let data = df.collect()
   result = CachedDataFrame[T](data: data)
 
-
 proc forEach*[T](df: DataFrame[T], f: proc(x: T): void) =
   ## Applies a function ``f`` to all elements of a data frame.
   let it = df.iter()
   for x in it():
     f(x)
-
 
 method collect*[T](df: DataFrame[T]): seq[T] {.base.} =
   ## Collects the content of a ``DataFrame[T]`` and returns it as ``seq[T]``.
@@ -526,11 +530,20 @@ proc echoGeneric*[T](x: T) {.procvar.} =
   ## Convenience to allow ``df.forEach(echoGeneric)``
   echo x
 
-proc show*[T: not tuple](df: DataFrame[T], s: Stream = newFileStream(stdout)) =
+proc show*[T: not tuple](df: DataFrame[T], s: Stream = nil) =
   ## Prints the content of the data frame using generic to string conversion.
   ## If no stream is specified, the output is written to ``stdout``.
+
+  var stream: Stream
+
+  if s.isNil:
+    stream = newFileStream(stdout)
+  else:
+    stream = s
+
   proc print(x: T) =
-    s.writeLine(x)
+    stream.writeLine(x)
+
   df.forEach(print)
 
 proc separatorRowIntercepted(sizes: seq[int], interceptor: char): string =
@@ -540,53 +553,59 @@ proc separatorRowIntercepted(sizes: seq[int], interceptor: char): string =
     result &= '-'.repeat(size + 2)
     result &= interceptor
 
-proc show*[T: tuple](df: DataFrame[T], s: Stream = newFileStream(stdout)) =
+proc show*[T: tuple](df: DataFrame[T], s: Stream = nil) =
   ## Prints the content of the data frame in the form of an ASCII table.
   ## If no stream is specified, the output is written to ``stdout``.
   var dummy: T
   var i = 0
   let fields = getFields(T)
   let sizes = 10.repeat(fields.len)
+  var stream: Stream
 
-  s.writeLine(separatorRowIntercepted(sizes, '+'))
+  if s.isNil:
+    stream = newFileStream(stdout)
+  else:
+    stream = s
+
+  stream.writeLine(separatorRowIntercepted(sizes, '+'))
 
   var totalLineWidth = 0
   for field, value in dummy.fieldPairs:
     if i == 0:
-      s.write("| ")
+      stream.write("| ")
       totalLineWidth += 2
     else:
-      s.write(" | ")
+      stream.write(" | ")
       totalLineWidth += 3
     when value is string:
       let strFormatted = field | -sizes[i]
     else:
       let strFormatted = field | +sizes[i]
-    s.write(fixedTruncateR(strFormatted, sizes[i]))
+    stream.write(fixedTruncateR(strFormatted, sizes[i]))
     totalLineWidth += sizes[i]
     i += 1
-  s.write(" |\n")
+  stream.write(" |\n")
   totalLineWidth += 2
 
-  s.writeLine(separatorRowIntercepted(sizes, '+'))
+  stream.writeLine(separatorRowIntercepted(sizes, '+'))
 
   let it = df.iter()
   for x in it():
     i = 0
     for field, value in x.fieldPairs():
       if i == 0:
-        s.write("| ")
+        stream.write("| ")
       else:
-        s.write(" | ")
+        stream.write(" | ")
       when value is string:
         let strFormatted = value | -sizes[i]
       else:
         let strFormatted = $value | +sizes[i]
-      s.write(fixedTruncateR(strFormatted, sizes[i]))
+      stream.write(fixedTruncateR(strFormatted, sizes[i]))
       i += 1
-    s.write(" |\n")
+    stream.write(" |\n")
 
-  s.writeLine(separatorRowIntercepted(sizes, '+'))
+  stream.writeLine(separatorRowIntercepted(sizes, '+'))
 
 # -----------------------------------------------------------------------------
 # Actions (numerical)
@@ -757,7 +776,7 @@ proc fromRange*(dfc: DataFrameContext, indexUpto: int): DataFrame[int] =
 
 method iter*(df: RangeDataFrame): (iterator(): int) =
   result = iterator(): int =
-    for i in df.indexFrom .. <df.indexUpto:
+    for i in df.indexFrom..<df.indexUpto:
       yield i
 
 

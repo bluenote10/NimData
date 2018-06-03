@@ -70,9 +70,9 @@ UnitTestSuite("JoinEquiDataFrame"):
       (name: "A", height: 1.50),
       (name: "B", height: 1.50),
     ])
-    
+
     let joined = join(dfA, dfB, [name])
-    
+
     check joined.collect() == @[
       (name: "A", age: 99, height: 1.80),
       (name: "A", age: 99, height: 1.50),
@@ -88,9 +88,9 @@ UnitTestSuite("JoinEquiDataFrame"):
       (name: "A", height: 1.50, id: 2),
       (name: "B", height: 1.50, id: 3),
     ])
-    
+
     let joined = join(dfA, dfB, [id, name])
-    
+
     check joined.collect() == @[
       (id: 1, name: "A", age: 99, height: 1.80),
     ]
