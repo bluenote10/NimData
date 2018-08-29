@@ -1,7 +1,6 @@
 import macros
 import strutils
 
-
 # Inspired by Jehan's forum post
 proc `|`*(s: string, d: int): string =
   if s.len < d.abs:
@@ -44,7 +43,6 @@ proc fixedTruncateL*(s: string, maxLen: int): string =
   else:
     result = s
 
-
 macro debug*(n: varargs[typed]): untyped =
   # `n` is a Nim AST that contains the whole macro invocation
   # this macro returns a list of statements:
@@ -66,25 +64,31 @@ macro debug*(n: varargs[typed]): untyped =
   # add new line
   add(result, newCall("writeLine", newIdentNode("stdout"), newStrLitNode("")))
 
-macro showExpr*(arg: untyped): untyped =
-  let argCallsite = callsite()[1]
-  result = newNimNode(nnkStmtList)
-  result.add(newCall("writeLine", newIdentNode("stdout"), argCallsite.toStrLit))
-  #result.add(newCall("write", newIdentNode("stdout"), newStrLitNode(" => ")))
-  result.add(newCall("writeLine", newIdentNode("stdout"), arg))
+when NimMinor >= 18 and NimPatch > 0:
+  macro showExpr*(arg: varargs[untyped]): untyped =
+    let argCallsite = arg[1]
 
-macro showStmt*(arg: untyped): untyped =
-  let argCallsite = callsite()[1]
-  result = newNimNode(nnkStmtList)
-  result.add(newCall("writeLine", newIdentNode("stdout"), argCallsite.toStrLit))
-  #result.add(newCall("write", newIdentNode("stdout"), newStrLitNode(" => ")))
-  result.add(arg)
+  macro showStmt*(arg: varargs[untyped]): untyped =
+    let argCallsite = arg[1]
+else:
+  macro showExpr*(arg: typed): untyped =
+    let argCallsite = callsite()[1]
+    result = newNimNode(nnkStmtList)
+    result.add(newCall("writeLine", newIdentNode("stdout"), argCallsite.toStrLit))
+    #result.add(newCall("write", newIdentNode("stdout"), newStrLitNode(" => ")))
+    result.add(newCall("writeLine", newIdentNode("stdout"), arg))
+
+  macro showStmt*(arg: typed): untyped =
+    let argCallsite = arg[1]
+    result = newNimNode(nnkStmtList)
+    result.add(newCall("writeLine", newIdentNode("stdout"), argCallsite.toStrLit))
+    #result.add(newCall("write", newIdentNode("stdout"), newStrLitNode(" => ")))
+    result.add(arg)
 
 template scope*(name: string, code: untyped): untyped =
   echo "\n *** ", name
   block:
     code
-
 
 proc seqAddr*[T](s: var seq[T]): ptr T =
   if s.len > 0:
@@ -98,7 +102,6 @@ proc getFields*(T: typedesc): seq[string] =
   for field, _ in x.fieldPairs:
     result.add(field)
 
-
 template UnitTestSuite*(name: string, code: untyped): untyped =
   when defined(testNimData):
     import unittest
@@ -111,4 +114,3 @@ template notCompiles*(e: untyped): untyped =
 template getSourcePath*(): string =
   let path = instantiationInfo(fullPaths=true)
   path.filename
-
