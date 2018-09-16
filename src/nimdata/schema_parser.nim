@@ -3,13 +3,15 @@ import macros
 import strutils
 import parseutils
 import times
+import options
 
 type
   ColKind* = enum
     StrCol,
     IntCol,
     FloatCol,
-    DateCol
+    DateCol,
+    OptDateCol
   ColIntBase* = enum
     baseBin,
     baseOct,
@@ -22,7 +24,7 @@ type
       base: ColIntBase
     of StrCol:
       stripQuotes: bool
-    of DateCol:
+    of DateCol, OptDateCol:
       format: string
     else:
       discard
@@ -38,6 +40,9 @@ proc floatCol*(name: string): Column =
 
 proc dateCol*(name: string, format: string = "yyyy-MM-dd"): Column =
   Column(name: name, kind: DateCol, format: format)
+
+proc optDateCol*(name: string, format: string = "yyyy-MM-dd"): Column =
+  Column(name: name, kind: OptDateCol, format: format)
 
 proc parseBin[T: SomeSignedInt](s: string, number: var T, start = 0): int  {.
   noSideEffect.} =
@@ -115,6 +120,7 @@ macro schemaType*(schema: static[openarray[Column]]): untyped =
       of IntCol: bindSym"int64"
       of FloatCol: bindSym"float"
       of DateCol: bindSym"Time"
+      of OptDateCol: bindSym"Option[Time]"
     result.add(
       newIdentDefs(name = newIdentNode(col.name), kind = typ)
     )
@@ -139,6 +145,7 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
       of IntCol: bindSym"int64"
       of FloatCol: bindSym"float"
       of DateCol: bindSym"Time"
+      of OptDateCol: bindSym"Option[Time]"
     returnType.add(
       newIdentDefs(name = newIdentNode(col.name), kind = typ)
     )
@@ -178,6 +185,20 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
       else:
         field = times.Time(0)
       echo "[WARNING] Failed to parse '" & s & "' as a time (" & e.msg & "). Setting value to " & times.`$`(field)
+
+  template fragmentReadOptDate(field: untyped, sep: char, format: string) =
+    ## read string
+    copyFrom = i
+    skipPastSep(s, i, hitEnd, sep)
+    let s =
+      if not hitEnd:
+        substr(s, copyFrom, i-2)
+      else:
+        substr(s, copyFrom, s.len)
+    try:
+      field = some(times.toTime(times.parse(s, format)))
+    except ValueError:
+      field = none(Time)
 
   template fragmentReadIntBin(field: untyped) =
     ## read binary int
@@ -225,6 +246,12 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
       let call = getAst(fragmentReadDate(fieldExpr, sepExpr, col.format))
       body.add(call)
       # for a DateCol we don't need the call to fragmentSkipPastSep, because
+      # the string extraction already advances past the separator
+      requiresAdvancePastSep = false
+    of OptDateCol:
+      let call = getAst(fragmentReadOptDate(fieldExpr, sepExpr, col.format))
+      body.add(call)
+      # for an OptDateCol we don't need the call to fragmentSkipPastSep, because
       # the string extraction already advances past the separator
       requiresAdvancePastSep = false
     of IntCol:
