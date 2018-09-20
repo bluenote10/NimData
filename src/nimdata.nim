@@ -230,7 +230,7 @@ proc sort*[T](df: DataFrame[T], order: SortOrder = SortOrder.Ascending): DataFra
   result = SortDataFrame[T, T](
     orig: df,
     computed: false,
-    data: nil,
+    data: none(seq[T]),
     f: genericIdentity[T],
     order: order,
   )
