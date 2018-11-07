@@ -27,8 +27,8 @@ type
     else:
       discard
 
-proc strCol*(name: string): Column =
-  Column(kind: StrCol, name: name)
+proc strCol*(name: string, stripQuotes: bool = false): Column =
+  Column(kind: StrCol, name: name, stripQuotes: stripQuotes)
 
 proc intCol*(name: string, base: ColIntBase = baseDec): Column =
   Column(kind: IntCol, name: name, base: base)
@@ -149,7 +149,7 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
   template fragmentSkipPastSep(sep: char) =
     skipPastSep(s, i, hitEnd, sep)
 
-  template fragmentReadStr(field: untyped, sep: char) =
+  template fragmentReadStr(field: untyped, sep: char, stripQuotes: bool) =
     ## read string
     copyFrom = i
     skipPastSep(s, i, hitEnd, sep)
@@ -157,6 +157,8 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
       field = substr(s, copyFrom, i-2)
     else:
       field = substr(s, copyFrom, s.len)
+    if bool(stripQuotes):
+      field = strip(field, chars = {'\'', '\"'})
 
   template fragmentReadDate(field: untyped, sep: char, format: string) =
     ## read string
@@ -216,7 +218,7 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
 
     case col.kind
     of StrCol:
-      let call = getAst(fragmentReadStr(fieldExpr, sepExpr))
+      let call = getAst(fragmentReadStr(fieldExpr, sepExpr, col.stripQuotes))
       body.add(call)
       # for a StrCol we don't need the call to fragmentSkipPastSep, because
       # the string extraction already advances past the separator

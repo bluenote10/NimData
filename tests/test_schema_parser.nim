@@ -130,6 +130,17 @@ UnitTestSuite("Schema parser"):
       parser(";;;") == (columnA: "", columnB: "", columnC: "")
       parser(" ; ; ") == (columnA: " ", columnB: " ", columnC: " ")
 
+  test "Pure string column (stripQuotes)":
+    const schema = [
+      strCol("columnA"),
+      strCol("columnB", stripQuotes = true)
+    ]
+    let parser = schemaParser(schema, ';')
+    check:
+      parser("hello;world") == (columnA: "hello", columnB: "world")
+      parser("\"hello\";\"world\"") == (columnA: "\"hello\"", columnB: "world")
+      parser("'hello';'world'") == (columnA: "'hello'", columnB: "world")
+
   # ---------------------------------------------------------------------------
   # int
   # ---------------------------------------------------------------------------
