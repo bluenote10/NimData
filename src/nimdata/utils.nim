@@ -64,7 +64,7 @@ macro debug*(n: varargs[typed]): untyped =
   # add new line
   add(result, newCall("writeLine", newIdentNode("stdout"), newStrLitNode("")))
 
-when NimMinor >= 18 and NimPatch > 0:
+when (NimMajor, NimMinor, NimPatch) > (0, 18, 0):
   macro showExpr*(arg: varargs[untyped]): untyped =
     let argCallsite = arg[1]
 
