@@ -42,3 +42,12 @@ UnitTestSuite("Numerical Actions"):
     check DF.fromSeq(@[+1.0, +2.0, +3.0]).max() == 3.0
     check DF.fromSeq(@[-1.0, -2.0, -3.0]).max() == -1.0
 
+  test "population stdev":
+    check DF.fromSeq(@[1, 2, 3]).stdev() == 0.816496580927726
+    check DF.fromSeq(@[1, 2, 3]).map(x => x).stdev() == 0.816496580927726
+    check DF.fromSeq(@[1.5, 2.5, 2.5, 2.75, 3.25, 4.75]).stdev() == 0.986893273527251
+
+  test "sample stdev":
+    check DF.fromSeq(@[1, 2, 3]).stdev(ddof = 1) == 1.0
+    check DF.fromSeq(@[1, 2, 3]).map(x => x).stdev(ddof = 1) == 1.0
+    check DF.fromSeq(@[1.5, 2.5, 2.5, 2.75, 3.25, 4.75]).stdev(ddof = 1) == 1.0810874155219827

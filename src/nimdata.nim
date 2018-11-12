@@ -35,6 +35,7 @@ import sequtils
 import streams
 
 import algorithm
+import math
 import random
 import times
 import os
@@ -661,6 +662,23 @@ proc median*[T: SomeNumber](df: DataFrame[T]): T =
     return (values[n div 2] + values[(n div 2) - 1]) / 2
   else:
     return values[n div 2]
+
+proc SS[T: SomeNumber](df: DataFrame[T]): float =
+  ## Sum of squared deviations
+  let c = df.mean()
+  let it = df.iter()
+  for x in it():
+    result += pow(x.float - c, 2)
+
+proc stdev*[T: SomeNumber](df: DataFrame[T], ddof = 0): float =
+  ## Computes the standard deviation of a data frame of numerical type ``T``.
+  ## Population standard deviation by default. Specify ``ddof=1`` to compute
+  ## the sample standard deviation.
+  let n = df.count()
+  if n < 2:
+    raise newException(ValueError, "stdev requires at least two data points")
+  let pvar = df.SS() / (n - ddof).float
+  result = sqrt(pvar)
 
 # -----------------------------------------------------------------------------
 # Actions (IO)
