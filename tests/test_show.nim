@@ -1,6 +1,7 @@
 import nimdata
 import nimdata/utils
 import streams
+import strutils
 
 UnitTestSuite("Show"):
 
@@ -43,3 +44,19 @@ UnitTestSuite("Show"):
       (f32: 1f32, f64: 1f64, i8: 1i8, i16: 1i16, i32: 1i32, i64: 1i64),
     ]
     DF.fromSeq(data3).show(stdoutDummy)
+
+  test "Custom width":
+    var s = newStringStream()
+    let data1 = @[
+      (name: "Bob", age: 99, testWithLongColumn: 1.112341975, anotherCol: "with very long strings"),
+      (name: "Joe", age: 11, testWithLongColumn: 1.1,         anotherCol: "short"),
+    ]
+    DF.fromSeq(data1).show(s, width = 12)
+    s.setPosition(0)
+    check: s.readAll() == """+--------------+--------------+--------------+--------------+
+      | name         |          age | testWithLon… | anotherCol   |
+      +--------------+--------------+--------------+--------------+
+      | Bob          |           99 |  1.112341975 | with very l… |
+      | Joe          |           11 |          1.1 | short        |
+      +--------------+--------------+--------------+--------------+
+    """.unindent()

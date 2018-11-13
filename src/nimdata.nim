@@ -556,13 +556,14 @@ proc separatorRowIntercepted(sizes: seq[int], interceptor: char): string =
     result &= '-'.repeat(size + 2)
     result &= interceptor
 
-proc show*[T: tuple](df: DataFrame[T], s: Stream = nil) =
+proc show*[T: tuple](df: DataFrame[T], s: Stream = nil, width = 10) =
   ## Prints the content of the data frame in the form of an ASCII table.
   ## If no stream is specified, the output is written to ``stdout``.
+  ## Fields are truncated at `width` characters (by default `10`).
   var dummy: T
   var i = 0
   let fields = getFields(T)
-  let sizes = 10.repeat(fields.len)
+  let sizes = width.repeat(fields.len)
   var stream: Stream
 
   if s.isNil:
