@@ -8,6 +8,13 @@ type
   ColKind* = enum
     StrCol,
     IntCol,
+    Int8Col,
+    Int16Col,
+    Int32Col,
+    UIntCol,
+    UInt8Col,
+    UInt16Col,
+    UInt32Col,
     FloatCol,
     DateCol
   ColIntBase* = enum
@@ -18,7 +25,7 @@ type
   Column* = object # TODO: this should get documented: https://forum.nim-lang.org/t/196
     name*: string
     case kind*: ColKind
-    of IntCol:
+    of IntCol .. UInt32Col:
       base: ColIntBase
     of StrCol:
       stripQuotes: bool
@@ -32,6 +39,27 @@ proc strCol*(name: string, stripQuotes: bool = false): Column =
 
 proc intCol*(name: string, base: ColIntBase = baseDec): Column =
   Column(kind: IntCol, name: name, base: base)
+
+proc int8Col*(name: string, base: ColIntBase = baseDec): Column =
+  Column(kind: Int8Col, name: name, base: base)
+
+proc int16Col*(name: string, base: ColIntBase = baseDec): Column =
+  Column(kind: Int16Col, name: name, base: base)
+
+proc int32Col*(name: string, base: ColIntBase = baseDec): Column =
+  Column(kind: Int32Col, name: name, base: base)
+
+proc uintCol*(name: string, base: ColIntBase = baseDec): Column =
+  Column(kind: UIntCol, name: name, base: base)
+
+proc uint8Col*(name: string, base: ColIntBase = baseDec): Column =
+  Column(kind: UInt8Col, name: name, base: base)
+
+proc uint16Col*(name: string, base: ColIntBase = baseDec): Column =
+  Column(kind: UInt16Col, name: name, base: base)
+
+proc uint32Col*(name: string, base: ColIntBase = baseDec): Column =
+  Column(kind: UInt32Col, name: name, base: base)
 
 proc floatCol*(name: string): Column =
   Column(kind: FloatCol, name: name)
@@ -113,6 +141,13 @@ macro schemaType*(schema: static[openarray[Column]]): untyped =
     let typ = case col.kind
       of StrCol: bindSym"string"
       of IntCol: bindSym"int64"
+      of Int8Col: bindSym"int8"
+      of Int16Col: bindSym"int16"
+      of Int32Col: bindSym"int32"
+      of UIntCol: bindSym"uint64"
+      of UInt8Col: bindSym"uint8"
+      of UInt16Col: bindSym"uint16"
+      of UInt32Col: bindSym"uint32"
       of FloatCol: bindSym"float"
       of DateCol: bindSym"Time"
     result.add(
@@ -137,6 +172,13 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
     let typ = case col.kind
       of StrCol: bindSym"string"
       of IntCol: bindSym"int64"
+      of Int8Col: bindSym"int8"
+      of Int16Col: bindSym"int16"
+      of Int32Col: bindSym"int32"
+      of UIntCol: bindSym"uint64"
+      of UInt8Col: bindSym"uint8"
+      of UInt16Col: bindSym"uint16"
+      of UInt32Col: bindSym"uint32"
       of FloatCol: bindSym"float"
       of DateCol: bindSym"Time"
     returnType.add(
@@ -197,6 +239,22 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
     ## read hexadecimal int
     i += parseHex(s, field, start=i)
 
+  template fragmentReadUIntBin(field: untyped) =
+    ## read binary uint
+    i += parseBin(s, field, start=i).uint
+
+  template fragmentReadUIntOct(field: untyped) =
+    ## read octal uint
+    i += parseOct(s, field, start=i).uint
+
+  template fragmentReadUIntDec(field: untyped) =
+    ## read decimal uint
+    i += parseBiggestUInt(s, field, start=i)
+
+  template fragmentReadUIntHex(field: untyped) =
+    ## read hexadecimal uint
+    i += parseHex(s, field, start=i).uint
+
   template fragmentReadFloat(field: untyped) =
     ## read float
     skipOverWhitespace(s, i)
@@ -229,7 +287,7 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
       # for a DateCol we don't need the call to fragmentSkipPastSep, because
       # the string extraction already advances past the separator
       requiresAdvancePastSep = false
-    of IntCol:
+    of IntCol .. Int32Col:
       case col.base
       of baseBin:
         let call = getAst(fragmentReadIntBin(fieldExpr))
@@ -242,6 +300,21 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
         body.add(call)
       of baseHex:
         let call = getAst(fragmentReadIntHex(fieldExpr))
+        body.add(call)
+      requiresAdvancePastSep = true
+    of UIntCol .. UInt32Col:
+      case col.base
+      of baseBin:
+        let call = getAst(fragmentReadUIntBin(fieldExpr))
+        body.add(call)
+      of baseOct:
+        let call = getAst(fragmentReadUIntOct(fieldExpr))
+        body.add(call)
+      of baseDec:
+        let call = getAst(fragmentReadUIntDec(fieldExpr))
+        body.add(call)
+      of baseHex:
+        let call = getAst(fragmentReadUIntHex(fieldExpr))
         body.add(call)
       requiresAdvancePastSep = true
     of FloatCol:
@@ -262,4 +335,3 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
   when defined(checkMacros):
     #echo result.treerepr
     echo result.repr
-
