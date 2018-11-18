@@ -223,37 +223,41 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
         field = times.Time(0)
       echo "[WARNING] Failed to parse '" & s & "' as a time (" & e.msg & "). Setting value to " & times.`$`(field)
 
-  template fragmentReadIntBin(field: untyped) =
-    ## read binary int
-    i += parseBin(s, field, start=i)
+  template createIntTmpl(name, fn: untyped): untyped =
+    ## template to create all `fragmentRead...` templates, which makes sure
+    ## to convert the parsed value to the correct data type of the column.
+    ## If a parsed value is larger fits into the type, an exception will
+    ## be raised at runtime (from the failed conversion)
+    template `name`(field: untyped): untyped =
+      type dtype = type(field)
+      when dtype is int64 or dtype is uint64:
+        i += fn(s, field, start=i)
+      elif dtype is SomeSignedInt:
+        var x: int64 = 0
+        i += fn(s, x, start=i)
+        field = dtype(x)
+      else:
+        var x: uint64 = 0
+        i += fn(s, x, start=i)
+        field = dtype(x)
 
-  template fragmentReadIntOct(field: untyped) =
-    ## read octal int
-    i += parseOct(s, field, start=i)
+  # read binary int
+  createIntTmpl(fragmentReadIntBin, parseBin)
+  # read octal int
+  createIntTmpl(fragmentReadIntOct, parseOct)
+  # read decimal int
+  createIntTmpl(fragmentReadIntDec, parseBiggestInt)
+  # read hex int
+  createIntTmpl(fragmentReadIntHex, parseHex)
 
-  template fragmentReadIntDec(field: untyped) =
-    ## read decimal int
-    i += parseBiggestInt(s, field, start=i)
-
-  template fragmentReadIntHex(field: untyped) =
-    ## read hexadecimal int
-    i += parseHex(s, field, start=i)
-
-  template fragmentReadUIntBin(field: untyped) =
-    ## read binary uint
-    i += parseBin(s, field, start=i).uint
-
-  template fragmentReadUIntOct(field: untyped) =
-    ## read octal uint
-    i += parseOct(s, field, start=i).uint
-
-  template fragmentReadUIntDec(field: untyped) =
-    ## read decimal uint
-    i += parseBiggestUInt(s, field, start=i)
-
-  template fragmentReadUIntHex(field: untyped) =
-    ## read hexadecimal uint
-    i += parseHex(s, field, start=i).uint
+  # read binary uint
+  createIntTmpl(fragmentReadUIntBin, parseBin)
+  # read octal uint
+  createIntTmpl(fragmentReadUIntOct, parseOct)
+  # read decimal uint
+  createIntTmpl(fragmentReadUIntDec, parseBiggestUInt)
+  # read hex uint
+  createIntTmpl(fragmentReadUIntHex, parseHex)
 
   template fragmentReadFloat(field: untyped) =
     ## read float

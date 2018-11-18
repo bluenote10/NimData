@@ -193,6 +193,31 @@ UnitTestSuite("Schema parser"):
       parser("0b01;0o123;1000;0xabcde") == (columnBin: 0b01i64, columnOct: 0o123i64, columnDec: 1000i64, columnHex: 0xabcdei64)
 
   # ---------------------------------------------------------------------------
+  # int of different sizes
+  # ---------------------------------------------------------------------------
+  test "Int column different sizes":
+    const schema = [
+      intCol("columnA"),
+      int8Col("columnB"),
+      int16Col("columnC"),
+      int32Col("columnD"),
+      uintCol("columnE"),
+      uint8Col("columnF"),
+      uint16Col("columnG"),
+      uint32Col("columnH"),
+    ]
+    let parser = schemaParser(schema, ';')
+    check:
+      parser("122;123;124;125;126;127;128;129") == (columnA: 122i64,
+                                                    columnB: 123i8,
+                                                    columnC: 124i16,
+                                                    columnD: 125i32,
+                                                    columnE: 126u64,
+                                                    columnF: 127u8,
+                                                    columnG: 128u16,
+                                                    columnH: 129u32)
+
+  # ---------------------------------------------------------------------------
   # float
   # ---------------------------------------------------------------------------
 
@@ -239,5 +264,3 @@ UnitTestSuite("Schema parser -- date parsing"):
     ]
     let parser = schemaParser(schema, ';')
     check parser("2017-01-01").date == times.parse("2017-01-01", "yyyy-MM-dd").toTime
-
-
