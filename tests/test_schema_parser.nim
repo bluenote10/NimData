@@ -193,6 +193,86 @@ UnitTestSuite("Schema parser"):
       parser("0b01;0o123;1000;0xabcde") == (columnBin: 0b01i64, columnOct: 0o123i64, columnDec: 1000i64, columnHex: 0xabcdei64)
 
   # ---------------------------------------------------------------------------
+  # int of different sizes
+  # ---------------------------------------------------------------------------
+  test "Int column different sizes":
+    const schema = [
+      intCol("columnA"),
+      int8Col("columnB"),
+      int16Col("columnC"),
+      int32Col("columnD"),
+      uintCol("columnE"),
+      uint8Col("columnF"),
+      uint16Col("columnG"),
+      uint32Col("columnH"),
+    ]
+    let parser = schemaParser(schema, ';')
+    check:
+      parser("122;123;124;125;126;127;128;129") == (columnA: 122i64,
+                                                    columnB: 123i8,
+                                                    columnC: 124i16,
+                                                    columnD: 125i32,
+                                                    columnE: 126u64,
+                                                    columnF: 127u8,
+                                                    columnG: 128u16,
+                                                    columnH: 129u32)
+
+  # ---------------------------------------------------------------------------
+  # int8 of different bases
+  # ---------------------------------------------------------------------------
+
+  test "Pure int column of 8 bit, different base":
+    const schema = [
+      int8Col("columnBin", baseBin),
+      int8Col("columnOct", baseOct),
+      int8Col("columnDec", baseDec),
+      int8Col("columnHex", baseHex),
+    ]
+    let parser = schemaParser(schema, ';')
+    check:
+      parser("0b01;0o123;123;0x1a") == (columnBin: 0b01i8,
+                                        columnOct: 0o123i8,
+                                        columnDec: 123i8,
+                                        columnHex: 0x1ai8)
+
+  # ---------------------------------------------------------------------------
+  # uint64 of different bases
+  # ---------------------------------------------------------------------------
+
+  test "Pure uint column of 8 bit, different base":
+    const schema = [
+      uintCol("columnBin", baseBin),
+      uintCol("columnOct", baseOct),
+      uintCol("columnDec", baseDec),
+      uintCol("columnHex", baseHex),
+    ]
+    let parser = schemaParser(schema, ';')
+    check:
+      parser("0b01;0o123;123;0xaf") == (columnBin: 0b01u64,
+                                        columnOct: 0o123u64,
+                                        columnDec: 123u64,
+                                        columnHex: 0xafu64)
+
+  # ---------------------------------------------------------------------------
+  # uint8 of different bases
+  # ---------------------------------------------------------------------------
+
+  test "Pure uint column of 8 bit, different base":
+    const schema = [
+      uint8Col("columnBin", baseBin),
+      uint8Col("columnOct", baseOct),
+      uint8Col("columnDec", baseDec),
+      uint8Col("columnHex", baseHex),
+    ]
+    let parser = schemaParser(schema, ';')
+    check:
+      parser("0b01;0o123;123;0xaf") == (columnBin: 0b01u8,
+                                        columnOct: 0o123u8,
+                                        columnDec: 123u8,
+                                        columnHex: 0xafu8)
+
+
+  # ---------------------------------------------------------------------------
   # float
   # ---------------------------------------------------------------------------
 
@@ -239,5 +319,3 @@ UnitTestSuite("Schema parser -- date parsing"):
     ]
     let parser = schemaParser(schema, ';')
     check parser("2017-01-01").date == times.parse("2017-01-01", "yyyy-MM-dd").toTime
-
-

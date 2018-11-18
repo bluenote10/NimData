@@ -8,6 +8,13 @@ type
   ColKind* = enum
     StrCol,
     IntCol,
+    Int8Col,
+    Int16Col,
+    Int32Col,
+    UIntCol,
+    UInt8Col,
+    UInt16Col,
+    UInt32Col,
     FloatCol,
     DateCol
   ColIntBase* = enum
@@ -18,7 +25,7 @@ type
   Column* = object # TODO: this should get documented: https://forum.nim-lang.org/t/196
     name*: string
     case kind*: ColKind
-    of IntCol:
+    of IntCol .. UInt32Col:
       base: ColIntBase
     of StrCol:
       stripQuotes: bool
@@ -32,6 +39,27 @@ proc strCol*(name: string, stripQuotes: bool = false): Column =
 
 proc intCol*(name: string, base: ColIntBase = baseDec): Column =
   Column(kind: IntCol, name: name, base: base)
+
+proc int8Col*(name: string, base: ColIntBase = baseDec): Column =
+  Column(kind: Int8Col, name: name, base: base)
+
+proc int16Col*(name: string, base: ColIntBase = baseDec): Column =
+  Column(kind: Int16Col, name: name, base: base)
+
+proc int32Col*(name: string, base: ColIntBase = baseDec): Column =
+  Column(kind: Int32Col, name: name, base: base)
+
+proc uintCol*(name: string, base: ColIntBase = baseDec): Column =
+  Column(kind: UIntCol, name: name, base: base)
+
+proc uint8Col*(name: string, base: ColIntBase = baseDec): Column =
+  Column(kind: UInt8Col, name: name, base: base)
+
+proc uint16Col*(name: string, base: ColIntBase = baseDec): Column =
+  Column(kind: UInt16Col, name: name, base: base)
+
+proc uint32Col*(name: string, base: ColIntBase = baseDec): Column =
+  Column(kind: UInt32Col, name: name, base: base)
 
 proc floatCol*(name: string): Column =
   Column(kind: FloatCol, name: name)
@@ -113,6 +141,13 @@ macro schemaType*(schema: static[openarray[Column]]): untyped =
     let typ = case col.kind
       of StrCol: bindSym"string"
       of IntCol: bindSym"int64"
+      of Int8Col: bindSym"int8"
+      of Int16Col: bindSym"int16"
+      of Int32Col: bindSym"int32"
+      of UIntCol: bindSym"uint64"
+      of UInt8Col: bindSym"uint8"
+      of UInt16Col: bindSym"uint16"
+      of UInt32Col: bindSym"uint32"
       of FloatCol: bindSym"float"
       of DateCol: bindSym"Time"
     result.add(
@@ -137,6 +172,13 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
     let typ = case col.kind
       of StrCol: bindSym"string"
       of IntCol: bindSym"int64"
+      of Int8Col: bindSym"int8"
+      of Int16Col: bindSym"int16"
+      of Int32Col: bindSym"int32"
+      of UIntCol: bindSym"uint64"
+      of UInt8Col: bindSym"uint8"
+      of UInt16Col: bindSym"uint16"
+      of UInt32Col: bindSym"uint32"
       of FloatCol: bindSym"float"
       of DateCol: bindSym"Time"
     returnType.add(
@@ -181,21 +223,52 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
         field = times.Time(0)
       echo "[WARNING] Failed to parse '" & s & "' as a time (" & e.msg & "). Setting value to " & times.`$`(field)
 
-  template fragmentReadIntBin(field: untyped) =
-    ## read binary int
-    i += parseBin(s, field, start=i)
+  template createDecIntTmpl(name, fn: untyped): untyped =
+    ## template to create the `fragmentRead...` templates for decimal
+    ## integers.
+    ## If a parsed value is larger fits into the type, an exception will
+    ## be raised at runtime (from the failed conversion)
+    template `name`(field: untyped): untyped =
+      type dtype = type(field)
+      when dtype is int64 or dtype is uint64:
+        # int64 / uint64
+        i += fn(s, field, start=i)
+      else:
+        # int8 .. int32, uint8 .. uint32
+        when dtype is SomeSignedInt:
+          var x: int64 = 0
+        else:
+          var x: uint64 = 0
+        i += fn(s, x, start=i)
+        field = dtype(x)
 
-  template fragmentReadIntOct(field: untyped) =
-    ## read octal int
-    i += parseOct(s, field, start=i)
+  template createNonDecIntTmpl(name, fn: untyped): untyped =
+    ## template to create `fragmentRead...` templates for non decimal base.
+    ## Note on non decimal uint64: values larger than uint32 cannot be
+    ## parsed, since we have to use `int64` internally!
+    template `name`(field: untyped): untyped =
+      type dtype = type(field)
+      var x: int64 = 0
+      i += fn(s, x, start=i)
+      field = dtype(x)
 
-  template fragmentReadIntDec(field: untyped) =
-    ## read decimal int
-    i += parseBiggestInt(s, field, start=i)
+  # read binary int
+  createNonDecIntTmpl(fragmentReadIntBin, parseBin)
+  # read octal int
+  createNonDecIntTmpl(fragmentReadIntOct, parseOct)
+  # read decimal int
+  createDecIntTmpl(fragmentReadIntDec, parseBiggestInt)
+  # read hex int
+  createNonDecIntTmpl(fragmentReadIntHex, parseHex)
 
-  template fragmentReadIntHex(field: untyped) =
-    ## read hexadecimal int
-    i += parseHex(s, field, start=i)
+  # read binary uint
+  createNonDecIntTmpl(fragmentReadUIntBin, parseBin)
+  # read octal uint
+  createNonDecIntTmpl(fragmentReadUIntOct, parseOct)
+  # read decimal uint
+  createDecIntTmpl(fragmentReadUIntDec, parseBiggestUInt)
+  # read hex uint
+  createNonDecIntTmpl(fragmentReadUIntHex, parseHex)
 
   template fragmentReadFloat(field: untyped) =
     ## read float
@@ -229,7 +302,7 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
       # for a DateCol we don't need the call to fragmentSkipPastSep, because
       # the string extraction already advances past the separator
       requiresAdvancePastSep = false
-    of IntCol:
+    of IntCol .. Int32Col:
       case col.base
       of baseBin:
         let call = getAst(fragmentReadIntBin(fieldExpr))
@@ -242,6 +315,21 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
         body.add(call)
       of baseHex:
         let call = getAst(fragmentReadIntHex(fieldExpr))
+        body.add(call)
+      requiresAdvancePastSep = true
+    of UIntCol .. UInt32Col:
+      case col.base
+      of baseBin:
+        let call = getAst(fragmentReadUIntBin(fieldExpr))
+        body.add(call)
+      of baseOct:
+        let call = getAst(fragmentReadUIntOct(fieldExpr))
+        body.add(call)
+      of baseDec:
+        let call = getAst(fragmentReadUIntDec(fieldExpr))
+        body.add(call)
+      of baseHex:
+        let call = getAst(fragmentReadUIntHex(fieldExpr))
         body.add(call)
       requiresAdvancePastSep = true
     of FloatCol:
@@ -262,4 +350,3 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
   when defined(checkMacros):
     #echo result.treerepr
     echo result.repr
-
