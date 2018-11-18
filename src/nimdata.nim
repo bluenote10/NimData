@@ -90,7 +90,7 @@ type
 
   TakeDataFrame[T] = ref object of DataFrame[T]
     orig: DataFrame[T]
-    f: proc(i: int, x: T): bool {.locks: 0.}
+    nStop: int
 
   FlatMappedSeqDataFrame[U, T] = ref object of DataFrame[T]
     orig: DataFrame[U]
@@ -171,8 +171,7 @@ proc filterWithIndex*[T](df: DataFrame[T], f: proc(i: int, x: T): bool): DataFra
 proc take*[T](df: DataFrame[T], n: int): DataFrame[T] =
   ## Selects the first `n` rows of a data frame, stopping iteration
   ## after `n` is reached
-  proc filter(i: int, x: T): bool = i < n
-  result = TakeDataFrame[T](orig: df, f: filter)
+  result = TakeDataFrame[T](orig: df, nStop: n)
 
 proc drop*[T](df: DataFrame[T], n: int): DataFrame[T] =
   ## Discards the first `n` rows of a data frame.
@@ -395,7 +394,7 @@ method iter*[T](df: TakeDataFrame[T]): (iterator(): T) =
     var i = 0
     var it = df.orig.iter()
     for x in toIterBugfix(it):
-      if df.f(i, x):
+      if i < df.nStop:
         yield x
       else:
         break
