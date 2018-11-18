@@ -65,9 +65,6 @@ import nimdata/io_gzip
 import nimdata/html
 import nimdata/utils
 
-import nimhdf5
-
-
 type
   DataFrame*[T] = ref object of RootObj
 
@@ -142,19 +139,6 @@ type
     projectFunc: proc(a: A, b: B): D {.locks: 0.}
     computed: bool
     dataB: Table[C, seq[B]]
-
-  HDF5DataFrame*[T] = ref object of DataFrame[T]
-    file*: H5FileObj
-    filename*: string
-    baseGroup*: string # the group from which the dataframe is constructed
-                      # TODO: once composite data types are implemented in
-                      # nimhdf5, allow composite dataset too
-    # the following fields are filled automatically after creation
-    dummy*: T
-    dsetNames*: seq[string]
-    dsets*: seq[H5DataSet]
-    shape*: seq[int]
-    h5open*: bool # stores whether H5 file already open (so we don't close it)
 
 # -----------------------------------------------------------------------------
 # Transformations
@@ -539,14 +523,6 @@ method collect*[T](df: DataFrame[T]): seq[T] {.base.} =
   for x in it():
     result.add(x)
 
-method collect*[T](df: HDF5DataFrame[T]): seq[T] {.base.} =
-  ## Collects the content of a ``HDF5DataFrame[T]`` in a more efficient way, than
-  ## iterating over each row individually and returns it as ``seq[T]``.
-  result = newSeq[T]()
-  let it = df.cachedIter()
-  for x in it():
-    result.add(x)
-
 method collect*[T](df: CachedDataFrame[T]): seq[T] =
   ## Specialized implementation
   result = df.data
@@ -900,113 +876,150 @@ proc fromFile*(dfc: DataFrameContext,
 
 # -----------------------------------------------------------------------------
 # HDF5
-
-macro schemaSeqType*(schemaType: typed): untyped =
-  ## Creates a type corresponding to a given schema, containing a tuple of
-  ## sequences corresponding to the `schema`.
-  let tup = schemaType.getTypeImpl[1].getTypeImpl
-  result = newNimNode(nnkTupleTy)
-  for col in tup:
-    var colC = copy(col)
-    let name = $colC[0]
-    let innerType = $colC[1]
-    let dtype = nnkBracketExpr.newTree(
-      ident"seq",
-      ident(innerType)
-    )
-    colC[0] = ident(name)
-    colC[1] = dtype
-    result.add quote do:
-      `colC`
-  echo result.repr
-
-proc getDsetsAndNames[T](df: HDF5DataFrame[T]) =
-  var fIdx = 0
-  df.dsets = @[]
-  for f in fields(df.dummy):
-    let dsetName = df.dsetNames[fIdx]
-    let dset = df.file[(df.baseGroup / dsetName).dset_str]
-    df.dsets.add dset
-    inc fIdx
-  df.shape = df.dsets[0].shape
-
-proc fromHDF5*[T](dfc: DataFrameContext,
-                  h5f: var H5FileObj,
-                  filename: string,
-                  baseGroup: string): HDF5DataFrame[T] =
-  ## constructor for an already opened H5 file
-  ## NOTE: returns HDF5DataFrame instead of plain DataFrame to
-  ## support
-  var tmp: T
-  let dsetNames = getFields(T)
-  result = HDF5DataFrame[T](
-    file: h5f,
-    filename: filename,
-    baseGroup: baseGroup,
-    dummy: tmp,
-    dsetNames: getFields(T),
-    h5open: true
-  )
-  getDsetsAndNames(result)
-
-proc fromHDF5*[T](dfc: DataFrameContext,
-                  filename: string,
-                  baseGroup: string): HDF5DataFrame[T] =
-  var h5f = H5File(filename, "r")
-  let tmp = fromHDF5[T](dfc, h5f, filename, baseGroup)
-  result = tmp
-  result.h5open = false
-
 # -----------------------------------------------------------------------------
 
-method iter*[T](df: HDF5DataFrame[T]): (iterator(): T) =
-  result = iterator(): T =
-    if not df.h5open:
-      df.file = H5file(df.filename, "r")
-      getDsetsAndNames(df)
-    var idx = 0
-    while idx < df.shape[0]:
-      var fIdx = 0
-      for f in fields(df.dummy):
-        type dtype = type(f)
-        let dset = df.dsets[fIdx]
-        if idx < dset.shape[0]:
-          f = dset.read_hyperslab(dtype, @[idx, 0], @[1, 1])[0].dtype
-        inc fIdx
-      inc idx
-      let res = df.dummy
-      yield res
-    if not df.h5open:
-      discard df.file.close()
+template canImport(x: untyped): bool =
+  compiles:
+    import x
 
-macro assignTup(f, dataCache, idx: typed): untyped =
-  result = newStmtList()
-  let fsym = f[1].getTypeImpl
-  echo fsym.treeRepr
-  for x in fsym:
-    let name = ident($x[0])
-    result.add quote do:
-      df.dummy.`name` = `dataCache`.`name`[`idx`]
-  echo result.repr
+when canImport(nimhdf5) and not defined(noH5):
+  # only provide the hdf5 interface, if the hdf5 library is
+  # installed to avoid making `nimhdf5` a dependency.
+  # Also provide `noH5` compile flag to disable HDF5 support, even if
+  # `nimhdf5` is installed.
+  type
+    HDF5DataFrame*[T] = ref object of DataFrame[T]
+      file*: H5FileObj
+      filename*: string
+      baseGroup*: string # the group from which the dataframe is constructed
+                        # TODO: once composite data types are implemented in
+                        # nimhdf5, allow composite dataset too
+      # the following fields are filled automatically after creation
+      dummy*: T
+      dsetNames*: seq[string]
+      dsets*: seq[H5DataSet]
+      shape*: seq[int]
+      h5open*: bool # stores whether H5 file already open (so we don't close it)
 
-method cachedIter*[T](df: HDF5DataFrame[T]): (iterator(): T) =
-  result = iterator(): T =
-    if not df.h5open:
-      df.file = H5file(df.filename, "r")
-      getDsetsAndNames(df)
+  macro assignTup*(f, dataCache, idx: typed): untyped =
+    ## given `f` of the column schema, `dataCache` of the schema of
+    ## sequences, assigns `idx` of each `dataCache` field to each
+    ## field of `f`
+    result = newStmtList()
+    let fsym = f[1].getTypeImpl
+    for x in fsym:
+      let name = ident($x[0])
+      result.add quote do:
+        df.dummy.`name` = `dataCache`.`name`[`idx`]
+    when defined(checkMacros):
+      echo result.repr
+
+
+  method collect*[T](df: HDF5DataFrame[T]): seq[T] {.base.} =
+    ## Collects the content of a ``HDF5DataFrame[T]`` in a more efficient way, than
+    ## iterating over each row individually and returns it as ``seq[T]``.
+    result = newSeq[T]()
+    let it = df.cachedIter()
+    for x in it():
+      result.add(x)
+
+  proc getDsetsAndNames[T](df: HDF5DataFrame[T]) =
+    ## opens the HDF5 datasets in the file and stores them and
+    ## their shape in the given dataframe
     var fIdx = 0
-    var dataCache: schemaSeqType(T)
-    # read all data into `dataCache`
-    for n, f in fieldPairs(dataCache):
-      let dset = df.dsets[fIdx]
-      f = dset[getInnerType(type(f))]
+    df.dsets = @[]
+    for f in fields(df.dummy):
+      let dsetName = df.dsetNames[fIdx]
+      let dset = df.file[(df.baseGroup / dsetName).dset_str]
+      df.dsets.add dset
       inc fIdx
-    var idx = 0
-    while idx < df.shape[0]:
-      # now yield each row from the cache
-      assignTup(df.dummy, dataCache, idx)
-      inc idx
-      let res = df.dummy
-      yield res
-    if not df.h5open:
-      discard df.file.close()
+    df.shape = df.dsets[0].shape
+
+  proc fromHDF5*[T](dfc: DataFrameContext,
+                    h5f: var H5FileObj,
+                    filename: string,
+                    baseGroup: string): HDF5DataFrame[T] =
+    ## constructor for an already opened (!) H5 file. The result of the
+    ## `schemaType` proc needs to be given explicitly to this proc
+    ## i.e. `fromHDF5[outType](...)`.
+    ## 1 schema column must correspond to one 1D dataset located in
+    ## `baseGroup`. If datasets from different groups needs to be
+    ## combined, create individual dataframes and join them.
+    ## NOTE: returns HDF5DataFrame instead of plain DataFrame
+    ## so that all fields specific to HDF5DataFrame are available
+    ## here and in the overload
+    var tmp: T
+    let dsetNames = getFields(T)
+    result = HDF5DataFrame[T](
+      file: h5f,
+      filename: filename,
+      baseGroup: baseGroup,
+      dummy: tmp,
+      dsetNames: getFields(T),
+      h5open: true
+    )
+    getDsetsAndNames(result)
+
+  proc fromHDF5*[T](dfc: DataFrameContext,
+                    filename: string,
+                    baseGroup: string): HDF5DataFrame[T] =
+    ## constructor for a still closed HDF5 file. If many iterations
+    ## over the same file need to be done, consider opening the file
+    ## manually beforehand and close it once done with the dataframe,
+    ## because file will be closed/opened after/before each iteration
+    ## over the data.
+    var h5f = H5File(filename, "r")
+    let tmp = fromHDF5[T](dfc, h5f, filename, baseGroup)
+    result = tmp
+    result.h5open = false
+
+  # -----------------------------------------------------------------------------
+
+  method iter*[T](df: HDF5DataFrame[T]): (iterator(): T) =
+    ## normal iterator for HDF5 files yielding each line. Each element
+    ## from each dataset is read via hyperslab reading.
+    ## If efficiency is needed, call `cache` on the `HDF5DataFrame`, to
+    ## read the datasets whole in one call (calls `cachedIter` below)
+    result = iterator(): T =
+      if not df.h5open:
+        df.file = H5file(df.filename, "r")
+        getDsetsAndNames(df)
+      var idx = 0
+      while idx < df.shape[0]:
+        var fIdx = 0
+        for f in fields(df.dummy):
+          type dtype = type(f)
+          let dset = df.dsets[fIdx]
+          if idx < dset.shape[0]:
+            f = dset.read_hyperslab(dtype, @[idx, 0], @[1, 1])[0].dtype
+          inc fIdx
+        inc idx
+        let res = df.dummy
+        yield res
+      if not df.h5open:
+        discard df.file.close()
+
+  method cachedIter*[T](df: HDF5DataFrame[T]): (iterator(): T) =
+    ## iterator for HDF5 files reading all datasets in one call,
+    ## instead of (inefficiently) as a hyperslab line by line.
+    result = iterator(): T =
+      if not df.h5open:
+        df.file = H5file(df.filename, "r")
+        getDsetsAndNames(df)
+      var fIdx = 0
+      var dataCache: schemaSeqType(T)
+      # read all data into `dataCache`
+      for n, f in fieldPairs(dataCache):
+        let dset = df.dsets[fIdx]
+        # getInnerType is part of `nimhdf5`
+        f = dset[getInnerType(type(f))]
+        inc fIdx
+      var idx = 0
+      while idx < df.shape[0]:
+        # now yield each row from the cache
+        assignTup(df.dummy, dataCache, idx)
+        inc idx
+        let res = df.dummy
+        yield res
+      if not df.h5open:
+        discard df.file.close()

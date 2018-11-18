@@ -154,6 +154,26 @@ macro schemaType*(schema: static[openarray[Column]]): untyped =
       newIdentDefs(name = newIdentNode(col.name), kind = typ)
     )
 
+macro schemaSeqType*(schemaType: typed): untyped =
+  ## Creates a type corresponding to a given schema, containing a tuple of
+  ## sequences corresponding to the `schema`. Used to cache HDF5DataFrame
+  let tup = schemaType.getTypeImpl[1].getTypeImpl
+  result = newNimNode(nnkTupleTy)
+  for col in tup:
+    var colC = copy(col)
+    let name = $colC[0]
+    let innerType = $colC[1]
+    let dtype = nnkBracketExpr.newTree(
+      ident"seq",
+      ident(innerType)
+    )
+    colC[0] = ident(name)
+    colC[1] = dtype
+    result.add quote do:
+      `colC`
+  when defined(checkMacros):
+    echo result.repr
+
 macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyped =
   ## Creates a schema parser proc, which takes a ``string`` as input and
   ## returns a the parsing result as a tuple, with types corresponding to
