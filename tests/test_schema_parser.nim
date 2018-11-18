@@ -218,6 +218,61 @@ UnitTestSuite("Schema parser"):
                                                     columnH: 129u32)
 
   # ---------------------------------------------------------------------------
+  # int8 of different bases
+  # ---------------------------------------------------------------------------
+
+  test "Pure int column of 8 bit, different base":
+    const schema = [
+      int8Col("columnBin", baseBin),
+      int8Col("columnOct", baseOct),
+      int8Col("columnDec", baseDec),
+      int8Col("columnHex", baseHex),
+    ]
+    let parser = schemaParser(schema, ';')
+    check:
+      parser("0b01;0o123;123;0x1a") == (columnBin: 0b01i8,
+                                        columnOct: 0o123i8,
+                                        columnDec: 123i8,
+                                        columnHex: 0x1ai8)
+
+  # ---------------------------------------------------------------------------
+  # uint64 of different bases
+  # ---------------------------------------------------------------------------
+
+  test "Pure uint column of 8 bit, different base":
+    const schema = [
+      uintCol("columnBin", baseBin),
+      uintCol("columnOct", baseOct),
+      uintCol("columnDec", baseDec),
+      uintCol("columnHex", baseHex),
+    ]
+    let parser = schemaParser(schema, ';')
+    check:
+      parser("0b01;0o123;123;0xaf") == (columnBin: 0b01u64,
+                                        columnOct: 0o123u64,
+                                        columnDec: 123u64,
+                                        columnHex: 0xafu64)
+
+  # ---------------------------------------------------------------------------
+  # uint8 of different bases
+  # ---------------------------------------------------------------------------
+
+  test "Pure uint column of 8 bit, different base":
+    const schema = [
+      uint8Col("columnBin", baseBin),
+      uint8Col("columnOct", baseOct),
+      uint8Col("columnDec", baseDec),
+      uint8Col("columnHex", baseHex),
+    ]
+    let parser = schemaParser(schema, ';')
+    check:
+      parser("0b01;0o123;123;0xaf") == (columnBin: 0b01u8,
+                                        columnOct: 0o123u8,
+                                        columnDec: 123u8,
+                                        columnHex: 0xafu8)
+
+
+  # ---------------------------------------------------------------------------
   # float
   # ---------------------------------------------------------------------------
 

@@ -223,41 +223,52 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
         field = times.Time(0)
       echo "[WARNING] Failed to parse '" & s & "' as a time (" & e.msg & "). Setting value to " & times.`$`(field)
 
-  template createIntTmpl(name, fn: untyped): untyped =
-    ## template to create all `fragmentRead...` templates, which makes sure
-    ## to convert the parsed value to the correct data type of the column.
+  template createDecIntTmpl(name, fn: untyped): untyped =
+    ## template to create the `fragmentRead...` templates for decimal
+    ## integers.
     ## If a parsed value is larger fits into the type, an exception will
     ## be raised at runtime (from the failed conversion)
     template `name`(field: untyped): untyped =
       type dtype = type(field)
       when dtype is int64 or dtype is uint64:
+        # int64 / uint64
         i += fn(s, field, start=i)
-      elif dtype is SomeSignedInt:
-        var x: int64 = 0
-        i += fn(s, x, start=i)
-        field = dtype(x)
       else:
-        var x: uint64 = 0
+        # int8 .. int32, uint8 .. uint32
+        when dtype is SomeSignedInt:
+          var x: int64 = 0
+        else:
+          var x: uint64 = 0
         i += fn(s, x, start=i)
         field = dtype(x)
+
+  template createNonDecIntTmpl(name, fn: untyped): untyped =
+    ## template to create `fragmentRead...` templates for non decimal base.
+    ## Note on non decimal uint64: values larger than uint32 cannot be
+    ## parsed, since we have to use `int64` internally!
+    template `name`(field: untyped): untyped =
+      type dtype = type(field)
+      var x: int64 = 0
+      i += fn(s, x, start=i)
+      field = dtype(x)
 
   # read binary int
-  createIntTmpl(fragmentReadIntBin, parseBin)
+  createNonDecIntTmpl(fragmentReadIntBin, parseBin)
   # read octal int
-  createIntTmpl(fragmentReadIntOct, parseOct)
+  createNonDecIntTmpl(fragmentReadIntOct, parseOct)
   # read decimal int
-  createIntTmpl(fragmentReadIntDec, parseBiggestInt)
+  createDecIntTmpl(fragmentReadIntDec, parseBiggestInt)
   # read hex int
-  createIntTmpl(fragmentReadIntHex, parseHex)
+  createNonDecIntTmpl(fragmentReadIntHex, parseHex)
 
   # read binary uint
-  createIntTmpl(fragmentReadUIntBin, parseBin)
+  createNonDecIntTmpl(fragmentReadUIntBin, parseBin)
   # read octal uint
-  createIntTmpl(fragmentReadUIntOct, parseOct)
+  createNonDecIntTmpl(fragmentReadUIntOct, parseOct)
   # read decimal uint
-  createIntTmpl(fragmentReadUIntDec, parseBiggestUInt)
+  createDecIntTmpl(fragmentReadUIntDec, parseBiggestUInt)
   # read hex uint
-  createIntTmpl(fragmentReadUIntHex, parseHex)
+  createNonDecIntTmpl(fragmentReadUIntHex, parseHex)
 
   template fragmentReadFloat(field: untyped) =
     ## read float
