@@ -88,6 +88,10 @@ type
     orig: DataFrame[T]
     f: proc(i: int, x: T): bool {.locks: 0.}
 
+  TakeDataFrame[T] = ref object of DataFrame[T]
+    orig: DataFrame[T]
+    f: proc(i: int, x: T): bool {.locks: 0.}
+
   FlatMappedSeqDataFrame[U, T] = ref object of DataFrame[T]
     orig: DataFrame[U]
     f: proc(x: U): seq[T] {.locks: 0.}
@@ -165,9 +169,10 @@ proc filterWithIndex*[T](df: DataFrame[T], f: proc(i: int, x: T): bool): DataFra
   result = FilteredIndexDataFrame[T](orig: df, f: f)
 
 proc take*[T](df: DataFrame[T], n: int): DataFrame[T] =
-  ## Selects the first `n` rows of a data frame.
+  ## Selects the first `n` rows of a data frame, stopping iteration
+  ## after `n` is reached
   proc filter(i: int, x: T): bool = i < n
-  result = FilteredIndexDataFrame[T](orig: df, f: filter)
+  result = TakeDataFrame[T](orig: df, f: filter)
 
 proc drop*[T](df: DataFrame[T], n: int): DataFrame[T] =
   ## Discards the first `n` rows of a data frame.
@@ -384,6 +389,17 @@ method iter*[T](df: FilteredIndexDataFrame[T]): (iterator(): T) =
       if df.f(i, x):
         yield x
       i += 1
+
+method iter*[T](df: TakeDataFrame[T]): (iterator(): T) =
+  result = iterator(): T =
+    var i = 0
+    var it = df.orig.iter()
+    for x in toIterBugfix(it):
+      if df.f(i, x):
+        yield x
+      else:
+        break
+      inc i
 
 method iter*[T, U](df: FlatMappedSeqDataFrame[T, U]): (iterator(): U) =
   result = iterator(): U =
