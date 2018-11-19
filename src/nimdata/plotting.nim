@@ -17,7 +17,7 @@ template barPlot*[T](df: DataFrame[T], x, y: untyped): untyped =
 
 template histPlot*[T](df: DataFrame[T], hist: untyped): untyped =
   let data = df.collect()
-  let histData = data.map(r => r.hist.float)
+  let histData = data.map(r => r.hist)
   let title = "Histogram of " & astToStr(hist)
   histPlot(histData)
     .title(title)
@@ -36,8 +36,8 @@ template heatmap*[T](df: DataFrame[T], x, y, z: untyped): untyped =
 
 template scatterPlot*[T](df: DataFrame[T], x, y: untyped): untyped =
   let data = df.collect()
-  let xData = data.map(r => r.x.float)
-  let yData = data.map(r => r.y.float)
+  let xData = data.map(r => r.x)
+  let yData = data.map(r => r.y)
   let title = "Scatter plot of " & astToStr(x) & " vs. " & astToStr(y)
   scatterPlot(xData, yData)
     .title(title)
@@ -47,9 +47,9 @@ template scatterPlot*[T](df: DataFrame[T], x, y: untyped): untyped =
 template scatterColor*[T](df: DataFrame[T], x, y, z: untyped): untyped =
   ## adds a color dimension to the scatter plot in addition
   let data = df.collect()
-  let xData = data.map(r => r.x.float)
-  let yData = data.map(r => r.y.float)
-  let zData = data.map(r => r.z.float)
+  let xData = data.map(r => r.x)
+  let yData = data.map(r => r.y)
+  let zData = data.map(r => r.z)
   let title = "Scatter plot of " & astToStr(x) & " vs. " & astToStr(y) &
     " with colorscale of " & astToStr(z)
   scatterColor(xData, yData, zData)
