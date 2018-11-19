@@ -36,9 +36,7 @@ proc example01*() =
   df.toCsv("table.csv")
   df.openInBrowser()
 
-
 proc example02*() =
-
   # Load a CSV
   let dfRawText = DF.fromFile("examples/Bundesliga.csv")
 
@@ -132,6 +130,49 @@ proc example02*() =
       count: x.count
     ))
     .take(5)
+    .show()
+
+  # lets look at the 15 most successful home teams
+  df.filter(record => record.homeGoals > record.awayGoals)
+    .map(record => record.projectTo(homeTeam))
+    .valueCounts()
+    .sort(x => x.count, SortOrder.Descending)
+    .map(x => (
+      homeTeam: x.key.homeTeam,
+      count: x.count
+    ))
+    .take(15)
+    .barPlot(x = homeTeam, y = count)
+    .show()
+
+  # a scatter plots of homeGoals / awayGoals
+  df.scatterPlot(x = homeGoals, y = awayGoals)
+    .show()
+
+  # and a heatmap of these
+  df.map(record => record.projectTo(homeGoals, awayGoals))
+    .valueCounts()
+    .sort(x => x.count, SortOrder.Descending)
+    .map(x => (
+      homeGoals: x.key.homeGoals,
+      awayGoals: x.key.awayGoals,
+      count: x.count
+    ))
+    .heatmap(x = homeGoals, y = awayGoals, z = count)
+    .show()
+
+  # alternatively a coloread scatter plot of the same, with the
+  # number of occurences as the color of the marker
+  df.map(record => record.projectTo(homeGoals, awayGoals))
+    .valueCounts()
+    .sort(x => x.count, SortOrder.Descending)
+    .map(x => (
+      homeGoals: x.key.homeGoals,
+      awayGoals: x.key.awayGoals,
+      count: x.count
+    ))
+    .scatterColor(x = homeGoals, y = awayGoals, z = count)
+    .markerSize(20)
     .show()
 
   # To open data frame in browser:

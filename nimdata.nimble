@@ -11,6 +11,7 @@ binDir = "bin"
 # Dependencies
 requires "nim >= 0.16.0"
 requires "zip >= 0.1.1"
+requires "plotly"
 
 
 import strutils
@@ -50,4 +51,3 @@ task tests, "Runs unit tests":
     # This does currently not make sense, due to include only source files:
     # for f in iterateSourceFiles(thisDir()):
     #   runTest(f)
-
