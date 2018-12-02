@@ -25,8 +25,6 @@ when (NimMajor, NimMinor, NimPatch) > (0, 18, 0):
 else:
   import future
 
-import options
-
 import typetraits
 import macros
 
@@ -64,6 +62,7 @@ export `=>`
 import nimdata/io_gzip
 import nimdata/html
 import nimdata/utils
+
 
 type
   DataFrame*[T] = ref object of RootObj
@@ -117,7 +116,7 @@ type
   SortDataFrame[T, U] = ref object of DataFrame[T]
     orig: DataFrame[T]
     computed: bool
-    data: Option[seq[T]]
+    data: seq[T]
     f: proc(x: T): U {.locks: 0.}
     order: SortOrder
 
@@ -133,7 +132,7 @@ type
     cmpFunc: proc(a: A, b: B): bool {.locks: 0.}
     projectFunc: proc(a: A, b: B): C {.locks: 0.}
     computed: bool
-    dataB: Option[seq[B]]
+    dataB: seq[B]
 
   JoinEquiDataFrame[A, B, C, D] = ref object of DataFrame[D]
     origA: DataFrame[A]
@@ -143,6 +142,7 @@ type
     projectFunc: proc(a: A, b: B): D {.locks: 0.}
     computed: bool
     dataB: Table[C, seq[B]]
+
 
 # -----------------------------------------------------------------------------
 # Transformations
@@ -222,7 +222,7 @@ proc sort*[T, U](df: DataFrame[T], f: proc(x: T): U, order: SortOrder = SortOrde
   result = SortDataFrame[T, U](
     orig: df,
     computed: false,
-    data: none seq[T],
+    data: @[],
     f: f,
     order: order,
   )
@@ -233,7 +233,7 @@ proc sort*[T](df: DataFrame[T], order: SortOrder = SortOrder.Ascending): DataFra
   result = SortDataFrame[T, T](
     orig: df,
     computed: false,
-    data: none(seq[T]),
+    data: @[],
     f: genericIdentity[T],
     order: order,
   )
@@ -276,7 +276,7 @@ proc joinTheta*[A, B, C](dfA: DataFrame[A],
     cmpFunc: cmpFunc,
     projectFunc: projectFunc,
     computed: false,
-    dataB: none seq[B]
+    dataB: @[]
   )
 
 proc joinEqui*[A, B, C, D](dfA: DataFrame[A],
@@ -430,16 +430,16 @@ method iter*[T](df: ValueCountsDataFrame[T]): (iterator(): tuple[key: T, count: 
 
 method iter*[T, U](df: SortDataFrame[T, U]): (iterator(): T) =
   if not df.computed:
-    df.data = some df.orig.collect()
+    df.data = df.orig.collect()
     sort(
-      get df.data,
+      df.data,
       (x, y) => cmp(df.f(x), df.f(y)),
       df.order
     )
     df.computed = true
 
   result = iterator(): T =
-    for x in get df.data:
+    for x in df.data:
       yield x
 
 method iter*[T, K, U](df: GroupByReduceDataFrame[T, K, U]): (iterator(): U) =
@@ -458,13 +458,13 @@ method iter*[T, K, U](df: GroupByReduceDataFrame[T, K, U]): (iterator(): U) =
 
 method iter*[A, B, C](df: JoinThetaDataFrame[A, B, C]): (iterator(): C) =
   if not df.computed:
-    df.dataB = some df.origB.collect()
+    df.dataB = df.origB.collect()
     df.computed = true
 
   result = iterator(): C =
     var it = df.origA.iter()
     for a in toIterBugfix(it):
-      for b in get df.dataB:
+      for b in df.dataB:
         let matches = df.cmpFunc(a, b)
         if matches:
           yield df.projectFunc(a, b)
