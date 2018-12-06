@@ -38,7 +38,7 @@ proc runTest(file: string) =
   var cc = getEnv("CC")
   if cc == "":
     cc = "gcc"
-  exec "nim c --cc:" & cc & " --verbosity:0 -r -d:testNimData -o:bin/tests " & file
+  exec "nim c --cc:" & cc & " --verbosity:0 -r -d:travis -d:testNimData -o:bin/tests " & file
 
 task tests, "Runs unit tests":
   # TODO: How can I ensure nimble installs deps before running this?

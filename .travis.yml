@@ -37,7 +37,11 @@ install:
     fi
     cd ..
 before_script:
-    - export PATH="nim-$BRANCH/bin${PATH:+:$PATH}"
+    - export PATH="/home/travis/build/bluenote10/NimData/nim-$BRANCH/bin${PATH:+:$PATH}"
+    - which nimble
+    - which nim
+    - pwd
+    #- export NIM_LIB_PREFIX="nim-$BRANCH/lib"
 script:
     - |
       nimble install -y
@@ -56,4 +60,3 @@ notifications:
   email:
     recipients:
       - contact@zentabs.com
-
