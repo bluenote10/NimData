@@ -44,6 +44,9 @@ import browsers
 import sets
 import tables
 
+import nimdata/basetypes
+export basetypes
+
 import nimdata/schema_parser
 export schema_parser.strCol
 export schema_parser.intCol
@@ -58,16 +61,17 @@ export tuples.projectAway
 export tuples.addField
 export tuples.addFields
 
+include nimdata/plotting
+
 export SortOrder
 export `=>`
+export map
 
 import nimdata/io_gzip
 import nimdata/html
 import nimdata/utils
 
 type
-  DataFrame*[T] = ref object of RootObj
-
   CachedDataFrame[T] = ref object of DataFrame[T]
     data: seq[T]
 
@@ -769,9 +773,6 @@ proc openInBrowser*[T: tuple|object](df: DataFrame[T]) =
 # Specialized DataFrame types
 # (definition down here because of https://github.com/nim-lang/Nim/issues/5325)
 # -----------------------------------------------------------------------------
-
-type
-  DataFrameContext* = object
 
 let
   DF* = DataFrameContext()
