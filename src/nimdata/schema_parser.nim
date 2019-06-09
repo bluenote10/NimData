@@ -1,7 +1,7 @@
 import macros
 
 import strutils
-import parseutils
+import parseutils except parseBin, parseOct, parseHex
 import times
 
 type
