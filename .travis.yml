@@ -13,6 +13,8 @@ matrix:
     # Ignore failures when building against the devel Nim branch
     - env: BRANCH=devel
   fast_finish: true
+before_install:
+  - sudo apt-get -y install libgtk-3-dev
 install:
   - |
     if [ ! -x nim-$BRANCH/bin/nim ]; then
