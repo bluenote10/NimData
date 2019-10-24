@@ -2,7 +2,7 @@
 language: c
 env:
   # Build and test against the master and devel branches of Nim
-  - BRANCH=master
+  - BRANCH=version-1-0
   - BRANCH=devel
 compiler:
   # Build and test using both gcc and clang
@@ -13,19 +13,14 @@ matrix:
     # Ignore failures when building against the devel Nim branch
     - env: BRANCH=devel
   fast_finish: true
+before_install:
+  - sudo apt-get -y install libgtk-3-dev libwebkit2gtk-4.0-dev
 install:
   - |
     if [ ! -x nim-$BRANCH/bin/nim ]; then
       git clone -b $BRANCH --depth 1 git://github.com/nim-lang/nim nim-$BRANCH/
       cd nim-$BRANCH
-      git clone --depth 1 git://github.com/nim-lang/csources csources/
-      cd csources
-      sh build.sh
-      cd ..
-      rm -rf csources
-      bin/nim c koch
-      ./koch boot -d:release
-      ./koch nimble
+      sh build_all.sh
     else
       cd nim-$BRANCH
       git fetch origin
