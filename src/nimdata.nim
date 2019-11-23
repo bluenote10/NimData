@@ -850,7 +850,7 @@ method iter*(df: FileRowsGZipDataFrame): (iterator(): string) =
     stream.close()
 
 # -----------------------------------------------------------------------------
-# FileRows (gzip)
+# FilesRows (gzip files)
 type
   FilesRowsGZipDataFrame = ref object of DataFrame[string]
     file_pattern: string
