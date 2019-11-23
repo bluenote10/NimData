@@ -853,7 +853,7 @@ method iter*(df: FileRowsGZipDataFrame): (iterator(): string) =
 # FileRows (gzip)
 type
   FilesRowsGZipDataFrame = ref object of DataFrame[string]
-    filename: string
+    file_pattern: string
     hasHeader: bool
 
 method iter*(df: FilesRowsGZipDataFrame): (iterator(): string) =
