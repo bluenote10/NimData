@@ -371,23 +371,29 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
     #echo result.treerepr
     echo result.repr
 
-proc createSchemaFromHeader*(file: string,sep = ';'): seq[Column] =
-  ## Creates a schema from the header line of a file.
-  ## Every column is created as a ```strCol``.
-  ##
-  ## This is useful if you want to read a file
-  ## and filter out columns before manualy creating a schema.
-  let header = staticRead(file).splitLines[0].split(sep)
+proc createSchemaFromHeader*(header: string,sep = ';'): seq[Column] =
+  ## Creates a schema with string-columns from a string with column names seperated by ```sep```.
+  ## This can be used to copy-paste the header of a large file and create columns from it.
   var i = 0
-  for str in header:
+  for str in header.split(sep):
       if str == "":
           result.add(strCol("unnamed" & $i))
           i += 1
       else:
           result.add(strCol(str))
+
+template createSchemaFromHeaderFile*(file: string,sep = ';'): seq[Column] =
+  ## Creates a schema from the header line of a file.
+  ## Every column is created as a ```strCol``.
+  ##
+  ## This is useful if you want to read a file
+  ## and filter out columns before manualy creating a schema.
+  let header = staticRead(file).splitLines[0]
+  createSchemaFromHeader(header,sep)
+  
   
 template headerParser*(file: string,sep = ';'): untyped =
   ## creates a schema from a file header and calls ```schemaParser```
-  const schema = createSchemaFromHeader(file,sep)
+  const schema = createSchemaFromHeaderFile(file,sep)
   schemaParser(schema,sep)
   
