@@ -370,3 +370,24 @@ macro schemaParser*(schema: static[openarray[Column]], sep: static[char]): untyp
   when defined(checkMacros):
     #echo result.treerepr
     echo result.repr
+
+proc createSchemaFromHeader*(file: string,sep = ';'): seq[Column] =
+  ## Creates a schema from the header line of a file.
+  ## Every column is created as a ```strCol``.
+  ##
+  ## This is useful if you want to read a file
+  ## and filter out columns before manualy creating a schema.
+  let header = staticRead(file).splitLines[0].split(sep)
+  var i = 0
+  for str in header:
+      if str == "":
+          result.add(strCol("unnamed" & $i))
+          i += 1
+      else:
+          result.add(strCol(str))
+  
+template headerParser*(file: string,sep = ';'): untyped =
+  ## creates a schema from a file header and calls ```schemaParser```
+  const schema = createSchemaFromHeader(file,sep)
+  schemaParser(schema,sep)
+  
