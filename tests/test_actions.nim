@@ -42,6 +42,12 @@ UnitTestSuite("Numerical Actions"):
     check DF.fromSeq(@[+1.0, +2.0, +3.0]).max() == 3.0
     check DF.fromSeq(@[-1.0, -2.0, -3.0]).max() == -1.0
 
+  test "median":
+    check DF.fromSeq(@[1,2,3]).median() == 2.0
+    check DF.fromSeq(@[1,2,3,4]).median() == 2.5
+    check DF.fromSeq(@[-1,-2,-3]).median() == -2.0
+    check DF.fromSeq(@[-1,-2,-3,-4]).median() == -2.5
+
   test "population stdev":
     check DF.fromSeq(@[1, 2, 3]).stdev() == 0.816496580927726
     check DF.fromSeq(@[1, 2, 3]).map(x => x).stdev() == 0.816496580927726

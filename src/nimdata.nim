@@ -640,6 +640,8 @@ proc sum*[T](df: DataFrame[T]): T =
 
 proc mean*[T: SomeNumber](df: DataFrame[T]): float =
   ## Computes the mean of a data frame of numerical type ``T``.
+  ##
+  ## Note that ``T`` must be convertible to ``float``.
   result = 0f
   var count = 0
   let it = df.iter()
@@ -670,19 +672,23 @@ proc max*[T](df: DataFrame[T]): T =
     if x > result:
       result = x
 
-proc median*[T: SomeNumber](df: DataFrame[T]): T =
+proc median*[T: SomeNumber](df: DataFrame[T]): float =
   ## Computes the median of a data frame of numerical type ``T``.
+  ##
+  ## Note that ``T`` must be convertible to ``float``.
   let dfSorted = df.sort()
   let it = dfSorted.iter()
   let values = toSeq(it())
   let n = values.len
   if n mod 2 == 0:
-    return (values[n div 2] + values[(n div 2) - 1]) / 2
+    return float(values[n div 2] + values[(n div 2) - 1]) / 2.0
   else:
-    return values[n div 2]
+    return float(values[n div 2])
 
 proc SS[T: SomeNumber](df: DataFrame[T]): float =
   ## Sum of squared deviations
+  ##
+  ## Note that ``T`` must be convertible to ``float``.
   let c = df.mean()
   let it = df.iter()
   for x in it():
