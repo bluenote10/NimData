@@ -14,7 +14,6 @@ UnitTestSuite("Reduce/Fold Actions"):
     check DF.fromSeq(@[1, 2, 3]).fold(+Inf, (a, b) => min(a, b.float)) == 1.0
     check DF.fromSeq(@[1, 2, 3]).fold("", (a, b) => a & $b) == "123"
 
-
 UnitTestSuite("Numerical Actions"):
   test "sum":
     check DF.fromSeq(@[1, 2, 3]).sum() == 6
@@ -42,11 +41,19 @@ UnitTestSuite("Numerical Actions"):
     check DF.fromSeq(@[+1.0, +2.0, +3.0]).max() == 3.0
     check DF.fromSeq(@[-1.0, -2.0, -3.0]).max() == -1.0
 
-  test "median":
-    check DF.fromSeq(@[1,2,3]).median() == 2.0
-    check DF.fromSeq(@[1,2,3,4]).median() == 2.5
-    check DF.fromSeq(@[-1,-2,-3]).median() == -2.0
-    check DF.fromSeq(@[-1,-2,-3,-4]).median() == -2.5
+  test "median (floats)":
+    check DF.fromSeq(@[1.0, 2.0, 3.0]).median() == 2.0
+    check DF.fromSeq(@[1.0, 2.0, 3.0, 4.0]).median() == 2.5
+    check DF.fromSeq(@[-1.0, -2.0, -3.0]).median() == -2.0
+    check DF.fromSeq(@[-1.0, -2.0, -3.0, -4.0]).median() == -2.5
+
+  test "median (ints)":
+    check DF.fromSeq(@[1, 2, 3]).median() == 2
+    check DF.fromSeq(@[1, 2, 3, 4]).median() == 2
+    check DF.fromSeq(@[-1, -2, -3]).median() == -2
+    # Note median is -3 because that is the lower middle element after
+    # sorting
+    check DF.fromSeq(@[-1, -2, -3, -4]).median() == -3
 
   test "population stdev":
     check DF.fromSeq(@[1, 2, 3]).stdev() == 0.816496580927726
