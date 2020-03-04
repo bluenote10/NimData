@@ -1,4 +1,3 @@
-
 # Package
 version       = "0.1.0"
 author        = "Fabian Keller"
@@ -33,12 +32,14 @@ iterator iterateSourceFiles(dir: string): string =
       yield f
 
 proc runTest(file: string) =
-  echo "\n *** Running tests in: ", file
+  echo "\n*** Running tests in: ", file
   mkdir("bin")
   var cc = getEnv("CC")
   if cc == "":
     cc = "gcc"
-  exec "nim c --cc:" & cc & " --verbosity:0 -r -d:travis -d:testNimData -o:bin/tests " & file
+  let cmd = "nim c --cc:" & cc & " --verbosity:0 -r -d:travis -d:testNimData --outdir:bin " & file
+  echo "exec ", cmd
+  exec cmd
 
 task tests, "Runs unit tests":
   # TODO: How can I ensure nimble installs deps before running this?
