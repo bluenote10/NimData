@@ -94,7 +94,7 @@ macro projectAway*(t: typed, fields: varargs[untyped]): untyped =
 
   # iterate over user specified fields to verify their correctness
   # and remove from tupleFields
-  var tupleFieldsToRemove = initSet[string]()
+  var tupleFieldsToRemove = initHashSet[string]()
   for field in fields:
     if field.kind != nnkIdent:
       error "projectAway expects pure identifiers as varargs, but received: " &
