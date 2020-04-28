@@ -206,7 +206,7 @@ proc unique*[T](df: DataFrame[T]): DataFrame[T] =
   ## of unique values, so use with care. Type T must provide a hash function
   ## with signature ``hash(x: T): Hash`` (see
   ## `hashes <https://nim-lang.org/docs/hashes.html>`_ documentation).
-  result = UniqueDataFrame[T](orig: df, seen: initSet[T]())
+  result = UniqueDataFrame[T](orig: df, seen: initHashSet[T]())
 
 proc valueCounts*[T](df: DataFrame[T]): DataFrame[tuple[key: T, count: int]] =
   ## Returns a data frame, which consists of the unique values and theirs
