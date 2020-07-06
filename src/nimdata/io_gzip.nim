@@ -16,7 +16,7 @@ proc fsClose(s: Stream) =
   discard gzclose(GZipStreamRef(s).f)
 
 proc fsReadData(s: Stream, buffer: pointer, bufLen: int): int =
-  return gzread(GZipStreamRef(s).f, buffer, bufLen)
+  return gzread(GZipStreamRef(s).f, buffer, bufLen.cuint)
 
 proc fsAtEnd(s: Stream): bool =
   return gzeof(GZipStreamRef(s).f) != 0
