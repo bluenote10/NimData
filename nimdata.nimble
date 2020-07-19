@@ -37,7 +37,7 @@ proc runTest(file: string) =
   var cc = getEnv("CC")
   if cc == "":
     cc = "gcc"
-  let cmd = "nim c --cc:" & cc & " --verbosity:0 -r -d:travis -d:testNimData --outdir:bin " & file
+  let cmd = "nim c --cc:" & cc & " --verbosity:0 -r -d:testNimData --outdir:bin " & file
   echo "exec ", cmd
   exec cmd
 
