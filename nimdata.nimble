@@ -8,8 +8,8 @@ srcDir = "src"
 binDir = "bin"
 
 # Dependencies
-requires "nim >= 0.16.0"
-requires "zip >= 0.1.1"
+requires "nim >= 1.0.0"
+requires "zip >= 0.3.1"
 requires "plotly"
 
 
