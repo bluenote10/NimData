@@ -1,4 +1,4 @@
-import sugar
+import sugar except collect
 import sequtils
 export map
 

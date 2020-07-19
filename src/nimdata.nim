@@ -21,7 +21,7 @@
 ##
 
 when (NimMajor, NimMinor, NimPatch) > (0, 18, 0):
-  import sugar
+  import sugar except collect
 else:
   import future
 
