@@ -26,6 +26,14 @@ For a complete reference of the supported operations in NimData refer to the
 The following tutorial will give a brief introduction of the main
 functionality based on [this](examples/Bundesliga.csv) German soccer data set.
 
+### Modules
+
+We'll start by importing NimData:
+
+```nimrod
+import nimdata
+```
+
 ### Reading raw text data
 
 To create a data frame which simply iterates over the raw text content
@@ -149,6 +157,8 @@ Data can be filtered by using `filter`. For instance, we can filter the data to 
 of a certain team only:
 
 ```nimrod
+import strutils
+
 df.filter(record =>
     record.homeTeam.contains("Freiburg") or
     record.awayTeam.contains("Freiburg")
@@ -166,6 +176,7 @@ df.filter(record =>
 # | "1. FC Ko… | "SC Freib… |          2 |          0 |          5 |       1993 | 1993-09-0… |
 # +------------+------------+------------+------------+------------+------------+------------+
 ```
+_Note: Without the `strutils` module, `contains` will throw a type error here._
 
 Or search for games with many home goals:
 
