@@ -33,6 +33,7 @@ We'll start by importing NimData:
 ```nimrod
 import nimdata
 ```
+We'll import additional modules as needed later in this tutorial.
 
 ### Reading raw text data
 
