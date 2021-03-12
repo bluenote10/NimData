@@ -1,30 +1,36 @@
 # NimData  [![Build Status](https://travis-ci.org/bluenote10/NimData.svg?branch=master)](https://travis-ci.org/bluenote10/NimData) [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](LICENSE) <a href="https://github.com/yglukhov/nimble-tag"><img src="https://raw.githubusercontent.com/yglukhov/nimble-tag/master/nimble.png" height="23" ></a>
 
-DataFrame API written in Nim, enabling [fast](#benchmarks) out-of-core data processing.
+**NimData** is a data manipulation and analysis library for the Nim programming language. It combines Pandas-like syntax with the type-safe, lazy APIs of distributed frameworks like Spark/Flink/Thrill. Although NimData is  currently non-distributed, it harnesses the power of Nim to perform out-of-core processing at native speed.
 
-NimData is inspired by frameworks like Pandas/Spark/Flink/Thrill,
-and sits between the Pandas and the Spark/Flink/Thrill side.
-Similar to Pandas, NimData is currently non-distributed,
-but shares the type-safe, lazy API of Spark/Flink/Thrill.
-Thanks to Nim, it enables elegant out-of-core processing at native speed.
+## Overview
 
-## Documentation
+NimData's core data type is the generic `DataFrame[T]`. All `DataFrame` methods are based on MapReduce and fall into two categories:
 
-NimData's core data type is a generic `DataFrame[T]`. The methods
-of a data frame can be categorized into generalizations
-of the Map/Reduce concept:
+- **Transformations**: Operations like `map` or `filter` transform one `DataFrame` into another. Transformations are lazy and can be chained. They will only be executed once an *action* is called.
+- **Actions**: Operations like `count`, `min`, `max`, `sum`, `reduce`, `fold`, `collect`, or `show` perform an aggregation on a `DataFrame`, and trigger the processing pipeline.
 
-- **Transformations**: Operations like `map` or `filter` transform one data
-frame into another. Transformations are lazy and can be chained. They will only
-be executed once an action is called.
-- **Actions**: Operations like `count`, `min`, `max`, `sum`, `reduce`, `fold`, `collect`, or `show`
-perform an aggregation of a data frame, and trigger the processing pipeline.
-
-For a complete reference of the supported operations in NimData refer to the
+For a complete list of NimData's supported operations, see the
 [module docs](https://bluenote10.github.io/NimData/nimdata.html).
 
 The following tutorial will give a brief introduction of the main
 functionality based on [this](examples/Bundesliga.csv) German soccer data set.
+
+
+## Installation
+
+1. [Install Nim](https://nim-lang.org/install.html), and ensure that Nim and Nimble (Nim's package manager) are both added to your PATH.
+2. From the command line, run `nimble install NimData`. This will download the NimData source from GitHub and put it in `~/.nimble/pkgs`.
+
+
+A minimal NimData program would look like:
+
+```nim
+import nimdata
+
+echo DF.fromRange(0, 10).collect()
+```
+
+To compile and run the program use `nim -r c test.nim` (`c` for compile, and `-r` to run directly after compilation).
 
 ### Modules
 
@@ -37,7 +43,7 @@ We'll import additional modules as needed later in this tutorial.
 
 ### Reading raw text data
 
-To create a data frame which simply iterates over the raw text content
+To create a `DataFrame` which simply iterates over the raw text content
 of a file, we can use `DF.fromFile`:
 
 ```nimrod
@@ -121,7 +127,7 @@ to transform a tuple/schema into a reduced version with certain columns removed.
 Other useful type-safe schema transformation macros are `projectTo`, which instead _keeps_ certain fields,
 and `addFields`, which extends the tuple/schema by new fields.
 
-We can perform the same checks as before, but this time the data frame
+We can perform the same checks as before, but this time the `DataFrame`
 contains the parsed tuples:
 
 ```nimrod
@@ -254,7 +260,7 @@ df.filter(record => (record.homeGoals - record.awayGoals) == maxDiff)
 
 ### Sorting
 
-A data frame can be transformed into a sorted data frame by the `sort()` method.
+A `DataFrame` can be transformed into a sorted `DataFrame` by the `sort()` method.
 Without specifying any arguments, the operation would sort using default
 comparison over all columns. By specifying a key function and the sort order,
 we can for instance rank the games by the number of away goals:
@@ -277,7 +283,7 @@ df.sort(record => record.awayGoals, SortOrder.Descending)
 
 ### Unique values
 
-The `DataFrame[T].unique()` transformation filters a data frame to unique elements.
+The `DataFrame[T].unique()` transformation filters a `DataFrame` to unique elements.
 This can be used for instance to find the number of teams that appear in the data:
 
 ```nimrod
@@ -286,9 +292,9 @@ echo df.map(record => record.homeTeam).unique().count()
 ```
 
 _Pandas user note_: In contrast to Pandas, there is no differentiation between
-a one-dimensional series and multi-dimensional data frame (`unique` vs `drop_duplicates`).
+a one-dimensional series and multi-dimensional `DataFrame` (`unique` vs `drop_duplicates`).
 `unique` works the same in for any hashable type `T`, e.g., we might as well get
-a data frame of unique pairs:
+a `DataFrame` of unique pairs:
 
 ```nimrod
 df.map(record => record.projectTo(homeTeam, awayTeam))
@@ -311,7 +317,7 @@ df.map(record => record.projectTo(homeTeam, awayTeam))
 
 The `DataFrame[T].valueCounts()` transformation extends the functionality of
 `unique()` by returning the unique values and their respective counts.
-The type of the transformed data frame is a tuple of `(key: T, count: int)`,
+The type of the transformed `DataFrame` is a tuple of `(key: T, count: int)`,
 where `T` is the original type.
 
 In our example, we can use `valueCounts()` for instance to find the most
@@ -347,58 +353,16 @@ is purely for cosmetics of the resulting table, projecting the nested
 `(key: (homeGaols: int, awayGoals: int), counts: int)` tuple back
 to a flat result.
 
-### Data frame viewer
+### `DataFrame` viewer
 
-Data frames can be opened and inspected in the browser by using `df.openInBrowser()`,
+`DataFrame`s can be opened and inspected in the browser by using `df.openInBrowser()`,
 which offers a simple Javascript based data browser:
 
 ![Viewer example](docs/viewer_example.png)
 
 Note that the viewer uses static HTML, so it should only be applied to small
-or heavily filtered data frames.
+or heavily filtered `DataFrame`s.
 
-
-## Installation (for users new to Nim)
-
-NimData requires to have Nim installed. On systems where a C compiler and git is available,
-the best method is to compile Nim from the GitHub sources. Modern versions of Nim include
-Nimble (Nim's package manager), and [building](https://github.com/nim-lang/nim#compiling)
-them both would look like:
-
-```bash
-# clone Nim
-git clone https://github.com/nim-lang/Nim.git
-cd Nim
-
-# build the C sources
-git clone --depth 1 https://github.com/nim-lang/csources.git
-cd csources
-sh build.sh
-cd ../
-
-# build Nim & Nimble
-bin/nim c koch
-./koch boot -d:release
-./koch nimble
-
-# add ./bin to path
-export PATH=$PATH:`readlink -f ./bin`
-```
-
-With Nim and Nimble installed, installing NimData becomes:
-
-    $ nimble install NimData
-
-This will download the NimData source from GitHub and put it in `~/.nimble/pkgs`.
-A minimal NimData program would look like:
-
-```nim
-import nimdata
-
-echo DF.fromRange(0, 10).collect()
-```
-
-To compile and run the program use `nim -r c test.nim` (`c` for compile, and `-r` to run directly after compilation).
 
 ## Benchmarks
 
