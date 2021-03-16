@@ -1,10 +1,10 @@
 # NimData  [![Build Status](https://travis-ci.org/bluenote10/NimData.svg?branch=master)](https://travis-ci.org/bluenote10/NimData) [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](LICENSE) <a href="https://github.com/yglukhov/nimble-tag"><img src="https://raw.githubusercontent.com/yglukhov/nimble-tag/master/nimble.png" height="23" ></a>
 
-**NimData** is a data manipulation and analysis library for the Nim programming language. It combines Pandas-like syntax with the type-safe, lazy APIs of distributed frameworks like Spark/Flink/Thrill. Although NimData is  currently non-distributed, it harnesses the power of Nim to perform out-of-core processing at native speed.
-
 ## Overview
 
-NimData's core data type is the generic `DataFrame[T]`. All `DataFrame` methods are based on MapReduce and fall into two categories:
+**NimData** is a data manipulation and analysis library for the Nim programming language. It combines Pandas-like syntax with the type-safe, lazy APIs of distributed frameworks like Spark/Flink/Thrill. Although NimData is  currently non-distributed, it harnesses the power of Nim to perform out-of-core processing at native speed.
+
+NimData's core data type is the generic `DataFrame[T]`. All `DataFrame` methods are based on the MapReduce paradigm and fall into two categories:
 
 - **Transformations**: Operations like `map` or `filter` transform one `DataFrame` into another. Transformations are lazy and can be chained. They will only be executed once an *action* is called.
 - **Actions**: Operations like `count`, `min`, `max`, `sum`, `reduce`, `fold`, `collect`, or `show` perform an aggregation on a `DataFrame`, and trigger the processing pipeline.
@@ -12,17 +12,18 @@ NimData's core data type is the generic `DataFrame[T]`. All `DataFrame` methods 
 For a complete list of NimData's supported operations, see the
 [module docs](https://bluenote10.github.io/NimData/nimdata.html).
 
-The following tutorial will give a brief introduction of the main
-functionality based on [this](examples/Bundesliga.csv) German soccer data set.
-
 
 ## Installation
 
-1. [Install Nim](https://nim-lang.org/install.html), and ensure that Nim and Nimble (Nim's package manager) are both added to your PATH.
-2. From the command line, run `nimble install NimData`. This will download the NimData source from GitHub and put it in `~/.nimble/pkgs`.
+1. [Install Nim](https://nim-lang.org/install.html) and ensure that both Nim and Nimble (Nim's package manager) are added to your PATH. 
+2. From the command line, run `$ nimble install NimData` (this will download NimData's source from GitHub to `~/.nimble/pkgs`).
 
 
-A minimal NimData program would look like:
+## Quickstart
+
+### Hello, World!
+
+Once NimData is installed, we'll write a simple program to test it. Create a new file named `test.nim` with the following contents:
 
 ```nim
 import nimdata
@@ -30,42 +31,37 @@ import nimdata
 echo DF.fromRange(0, 10).collect()
 ```
 
-To compile and run the program use `nim -r c test.nim` (`c` for compile, and `-r` to run directly after compilation).
-
-### Modules
-
-We'll start by importing NimData:
-
-```nimrod
-import nimdata
+From the command line, use `$ nim c -r test.nim` to compile and run the program (`c` for *compile*, and `-r` to *run* directly after compilation). It should print this [sequence](https://nim-by-example.github.io/seqs/): 
+```nim
+# => @[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 ```
-We'll import additional modules as needed later in this tutorial.
+
+_Pandas users_: This is roughly equivalent to `print(pd.DataFrame(range(10))[0].values)`
+
 
 ### Reading raw text data
 
-To create a `DataFrame` which simply iterates over the raw text content
-of a file, we can use `DF.fromFile`:
+Next we'll use [this](examples/Bundesliga.csv) German soccer data set to explore NimData's main functionality.
 
-```nimrod
+To create a `DataFrame` which simply iterates over the raw text content
+of a file, we can use `DF.fromFile()`:
+
+```nim
 let dfRawText = DF.fromFile("examples/Bundesliga.csv")
 ```
 
-The operation is lazy, so nothing happens so far.
-The type of the `dfRawText` is a plain `DataFrame[string]`.
-We can still perform some initial checks on it:
+Note that `fromFile()` is a *lazy* operation, meaning that NimData doesn't actually read the contents of the file yet. To read the file, we need to call an *action* on our dataframe.
 
-```nimrod
+Calling `count()`, for example, triggers a line-by-line reading of the file and returns the number of rows:
+
+```nim
 echo dfRawText.count()
 # => 14018
 ```
 
-The `count()` method is an action, which triggers the line-by-line reading of the
-file, returning the number of rows. We can re-use `dfRawText` with different
-transformations/actions. The following would filter the file to the first
-5 rows and perform a `show` action to print the records.
+We can perform multiple operations on `dfRawText`. For example, we can use `take(5)` to filter the file down to its first five rows, and `show` to print the result:
 
-
-```nimrod
+```nim
 dfRawText.take(5).show()
 # =>
 # "1","Werder Bremen","Borussia Dortmund",3,2,1,1963,1963-08-24 09:30:00
@@ -75,28 +71,15 @@ dfRawText.take(5).show()
 # "5","Karlsruher SC","Meidericher SV",1,4,1,1963,1963-08-24 09:30:00
 ```
 
-Each action call results in the file being read from scratch.
+_Pandas users_: This is equivalent to `print(dfRawText.head(5))`.
+
+Note, however, that every time an action is called, the file is read from scratch, which is inefficient. We'll improve on that in a moment.
 
 ### Type-safe schema parsing
 
-Now let's parse the CSV into type-safe tuple objects using `map`.
-The price for achieving compile time safety is that the schema
-has to be specified once for the compiler.
-Fortunately, Nim's meta programming capabilities make this very
-straightforward. The following example uses the `schemaParser`
-macro. This macro automatically generates a parsing function,
-which takes a `string` as input and returns a type-safe tuple
-with fields corresponding to the `schema` definition.
+At this stage, `dfRawText`'s data type is a plain `DataFrame[string]`. Let's transform our dataframe into something more useful for analysis:
 
-Since our data set is small and we want to perform multiple operations on it,
-it makes sense to persist the parsing result into memory.
-This can be done by using `cache()` method.
-As a result, all operations performed on `df` will not have to re-read
-the file, but read the already parsed data from memory.
-_Spark users note_: In contrast to Spark, `cache()` is currently implemented
-as an action.
-
-```nimrod
+```nim
 const schema = [
   strCol("index"),
   strCol("homeTeam"),
@@ -112,25 +95,19 @@ let df = dfRawText.map(schemaParser(schema, ','))
                   .cache()
 ```
 
-What happens here, is that the `schemaParser` macro constructs a specialized parsing function,
-which takes a string as input and returns a named tuple with fields corresponding to the schema
-definition. The resulting tuple would for instance have a field `record.homeGoals` of type `int64`.
+This code does three things:
 
-A first benefit of having a compile-time schema is that the parser can produce highly
-optimized machine code, resulting in a very fast parsing performance.
+1. The [`schemaParser` macro](https://bluenote10.github.io/NimData/nimdata/schema_parser.html#12) constructs a specialized parsing function for each field, which takes a string as input and returns a type-safe named tuple corresponding to the type definition in `schema`. For instance, `dateCol("date")` tells the parser that the last column is named "date" and contains `datetime` values. We can even specify the datetime format by passing a format string to `dateCol()` as a named parameter. A key benefit of defining the schema at compile time is that the parser produces highly optimized machine code, resulting in very fast performance.
 
-Note that our files contains a date column, which uses a non-standard date format. This can be
-handled by specifying an appropriate date format string. For some reason, the file also contains
-an `index` column which is rather boring (technically it's a quoted string of integer indices).
-We can get rid of the column by using the `projectAway` macro. In general this macro can be used
-to transform a tuple/schema into a reduced version with certain columns removed.
-Other useful type-safe schema transformation macros are `projectTo`, which instead _keeps_ certain fields,
-and `addFields`, which extends the tuple/schema by new fields.
+2. The `projectAway()` macro transforms the results of `schemeParser` into a new dataframe with the "index" column removed, since it isn't a proper index anyway but rather a column of [string literals](https://nim-lang.org/docs/manual.html#lexical-analysis-generalized-raw-string-literals) (_Pandas users_: this is roughly equivalent to `dfRawText.drop(columns=['index'])`). See also `projectTo`, which instead _keeps_ certain fields, and `addFields`, which extends the schema by new fields.
 
-We can perform the same checks as before, but this time the `DataFrame`
-contains the parsed tuples:
+3. The `cache()` method stores the parsing result in memory. This allows us to perform multiple actions on the data without having to re-read the file contents every time. _Spark users_: In contrast to Spark, `cache()` is currently implemented as an action.
 
-```nimrod
+
+
+Now we can perform the same operations as before, but this time our dataframe contains the parsed tuples:
+
+```nim
 echo df.count()
 # => 14018
 
@@ -150,7 +127,7 @@ df.take(5).show()
 Note that instead of starting the pipeline from `dfRawText` and using
 caching, we could always write the pipeline from scratch:
 
-```nimrod
+```nim
 DF.fromFile("examples/Bundesliga.csv")
   .map(schemaParser(schema, ','))
   .map(record => record.projectAway(index))
@@ -163,7 +140,7 @@ DF.fromFile("examples/Bundesliga.csv")
 Data can be filtered by using `filter`. For instance, we can filter the data to get games
 of a certain team only:
 
-```nimrod
+```nim
 import strutils
 
 df.filter(record =>
@@ -187,7 +164,7 @@ _Note: Without the `strutils` module, `contains` will throw a type error here._
 
 Or search for games with many home goals:
 
-```nimrod
+```nim
 df.filter(record => record.homeGoals >= 10)
   .show()
 # =>
@@ -223,7 +200,7 @@ Other filter-like transformation are:
 A `DataFrame[T]` can be converted easily into a `seq[T]` (Nim's native dynamic
 arrays) by using `collect`:
 
-```nimrod
+```nim
 echo df.map(record => record.homeGoals)
        .filter(goals => goals >= 10)
        .collect()
@@ -235,7 +212,7 @@ echo df.map(record => record.homeGoals)
 A DataFrame of a numerical type allows to use functions like `min`/`max`/`mean`.
 This allows to get things like:
 
-```nimrod
+```nim
 echo "Min date: ", df.map(record => record.year).min()
 echo "Max date: ", df.map(record => record.year).max()
 echo "Average home goals: ", df.map(record => record.homeGoals).mean()
@@ -265,7 +242,7 @@ Without specifying any arguments, the operation would sort using default
 comparison over all columns. By specifying a key function and the sort order,
 we can for instance rank the games by the number of away goals:
 
-```nimrod
+```nim
 df.sort(record => record.awayGoals, SortOrder.Descending)
   .take(5)
   .show()
@@ -286,7 +263,7 @@ df.sort(record => record.awayGoals, SortOrder.Descending)
 The `DataFrame[T].unique()` transformation filters a `DataFrame` to unique elements.
 This can be used for instance to find the number of teams that appear in the data:
 
-```nimrod
+```nim
 echo df.map(record => record.homeTeam).unique().count()
 # => 52
 ```
@@ -296,7 +273,7 @@ a one-dimensional series and multi-dimensional `DataFrame` (`unique` vs `drop_du
 `unique` works the same in for any hashable type `T`, e.g., we might as well get
 a `DataFrame` of unique pairs:
 
-```nimrod
+```nim
 df.map(record => record.projectTo(homeTeam, awayTeam))
   .unique()
   .take(5)
@@ -323,7 +300,7 @@ where `T` is the original type.
 In our example, we can use `valueCounts()` for instance to find the most
 frequent results in German soccer:
 
-```nimrod
+```nim
 df.map(record => record.projectTo(homeGoals, awayGoals))
   .valueCounts()
   .sort(x => x.count, SortOrder.Descending)
