@@ -6,8 +6,8 @@
 
 NimData's core data type is the generic `DataFrame[T]`. All `DataFrame` methods are based on the MapReduce paradigm and fall into two categories:
 
-- **Transformations**: Operations like `map` or `filter` transform one `DataFrame` into another. Transformations are lazy and can be chained. They will only be executed once an *action* is called.
-- **Actions**: Operations like `count`, `min`, `max`, `sum`, `reduce`, `fold`, `collect`, or `show` perform an aggregation on a `DataFrame`, and trigger the processing pipeline.
+- **Transformations**: Operations like `map` or `filter` transform one `DataFrame` into another. Transformations are lazy, meaning that they are not executed until an *action* is called. They can also be chained. 
+- **Actions**: Operations like `count`, `min`, `max`, `sum`, `reduce`, `fold`, `collect`, or `show` perform an aggregation on a `DataFrame`. Calling an action triggers the processing pipeline.
 
 For a complete list of NimData's supported operations, see the
 [module docs](https://bluenote10.github.io/NimData/nimdata.html).
@@ -50,16 +50,14 @@ of a file, we can use `DF.fromFile()`:
 let dfRawText = DF.fromFile("examples/Bundesliga.csv")
 ```
 
-Note that `fromFile()` is a *lazy* operation, meaning that NimData doesn't actually read the contents of the file yet. To read the file, we need to call an *action* on our dataframe.
-
-Calling `count()`, for example, triggers a line-by-line reading of the file and returns the number of rows:
+Note that `fromFile` is a *lazy* operation, meaning that NimData doesn't actually read the contents of the file yet. To read the file, we need to call an *action* on our dataframe. Calling `count`, for example, triggers a line-by-line reading of the file and returns the number of rows:
 
 ```nim
 echo dfRawText.count()
 # => 14018
 ```
 
-We can perform multiple operations on `dfRawText`. For example, we can use `take(5)` to filter the file down to its first five rows, and `show` to print the result:
+We can chain multiple operations on `dfRawText`. For example, we can use `take` to filter the file down to its first five rows, and `show` to print the result:
 
 ```nim
 dfRawText.take(5).show()
@@ -77,7 +75,7 @@ Note, however, that every time an action is called, the file is read from scratc
 
 ### Type-safe schema parsing
 
-At this stage, `dfRawText`'s data type is a plain `DataFrame[string]`. Let's transform our dataframe into something more useful for analysis:
+At this stage, `dfRawText`'s data type is a plain `DataFrame[string]`. It also doesn't have any column headers, and the first field isn't a proper index, but rather contains [string literals](https://nim-lang.org/docs/manual.html#lexical-analysis-generalized-raw-string-literals). Let's transform our dataframe into something more useful for analysis:
 
 ```nim
 const schema = [
@@ -99,9 +97,9 @@ This code does three things:
 
 1. The [`schemaParser` macro](https://bluenote10.github.io/NimData/nimdata/schema_parser.html#12) constructs a specialized parsing function for each field, which takes a string as input and returns a type-safe named tuple corresponding to the type definition in `schema`. For instance, `dateCol("date")` tells the parser that the last column is named "date" and contains `datetime` values. We can even specify the datetime format by passing a format string to `dateCol()` as a named parameter. A key benefit of defining the schema at compile time is that the parser produces highly optimized machine code, resulting in very fast performance.
 
-2. The `projectAway()` macro transforms the results of `schemeParser` into a new dataframe with the "index" column removed, since it isn't a proper index anyway but rather a column of [string literals](https://nim-lang.org/docs/manual.html#lexical-analysis-generalized-raw-string-literals) (_Pandas users_: this is roughly equivalent to `dfRawText.drop(columns=['index'])`). See also `projectTo`, which instead _keeps_ certain fields, and `addFields`, which extends the schema by new fields.
+2. The `projectAway` macro transforms the results of `schemeParser` into a new dataframe with the "index" column removed (_Pandas users_: this is roughly equivalent to `dfRawText.drop(columns=['index'])`). See also `projectTo`, which instead _keeps_ certain fields, and `addFields`, which extends the schema by new fields.
 
-3. The `cache()` method stores the parsing result in memory. This allows us to perform multiple actions on the data without having to re-read the file contents every time. _Spark users_: In contrast to Spark, `cache()` is currently implemented as an action.
+3. The `cache` method stores the parsing result in memory. This allows us to perform multiple actions on the data without having to re-read the file contents every time. _Spark users_: In contrast to Spark, `cache` is currently implemented as an action.
 
 
 
