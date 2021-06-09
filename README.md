@@ -1,4 +1,4 @@
-# NimData  [![Build Status](https://travis-ci.org/bluenote10/NimData.svg?branch=master)](https://travis-ci.org/bluenote10/NimData) [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](LICENSE) <a href="https://github.com/yglukhov/nimble-tag"><img src="https://raw.githubusercontent.com/yglukhov/nimble-tag/master/nimble.png" height="23" ></a>
+# NimData  [![Build Status](https://github.com/bluenote10/NimData/workflows/ci/badge.svg)](https://github.com/bluenote10/NimData/actions?query=workflow%3Aci) [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](LICENSE) <a href="https://github.com/yglukhov/nimble-tag"><img src="https://raw.githubusercontent.com/yglukhov/nimble-tag/master/nimble.png" height="23" ></a>
 
 ## Overview
 
@@ -6,7 +6,7 @@
 
 NimData's core data type is the generic `DataFrame[T]`. All `DataFrame` methods are based on the MapReduce paradigm and fall into two categories:
 
-- **Transformations**: Operations like `map` or `filter` transform one `DataFrame` into another. Transformations are lazy, meaning that they are not executed until an *action* is called. They can also be chained. 
+- **Transformations**: Operations like `map` or `filter` transform one `DataFrame` into another. Transformations are lazy, meaning that they are not executed until an *action* is called. They can also be chained.
 - **Actions**: Operations like `count`, `min`, `max`, `sum`, `reduce`, `fold`, `collect`, or `show` perform an aggregation on a `DataFrame`. Calling an action triggers the processing pipeline.
 
 For a complete list of NimData's supported operations, see the
@@ -15,7 +15,7 @@ For a complete list of NimData's supported operations, see the
 
 ## Installation
 
-1. [Install Nim](https://nim-lang.org/install.html) and ensure that both Nim and Nimble (Nim's package manager) are added to your PATH. 
+1. [Install Nim](https://nim-lang.org/install.html) and ensure that both Nim and Nimble (Nim's package manager) are added to your PATH.
 2. From the command line, run `$ nimble install NimData` (this will download NimData's source from GitHub to `~/.nimble/pkgs`).
 
 
@@ -31,7 +31,7 @@ import nimdata
 echo DF.fromRange(0, 10).collect()
 ```
 
-From the command line, use `$ nim c -r test.nim` to compile and run the program (`c` for *compile*, and `-r` to *run* directly after compilation). It should print this [sequence](https://nim-by-example.github.io/seqs/): 
+From the command line, use `$ nim c -r test.nim` to compile and run the program (`c` for *compile*, and `-r` to *run* directly after compilation). It should print this [sequence](https://nim-by-example.github.io/seqs/):
 ```nim
 # => @[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 ```

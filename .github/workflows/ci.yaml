@@ -1,0 +1,37 @@
+# https://docs.github.com/en/actions/configuring-and-managing-workflows/configuring-a-workflow
+# https://github.com/jiro4989/setup-nim-action
+
+name: ci
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 0 * * 0' # at 00:00 every Sunday
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        nim: ['1.2.0', 'devel']
+    name: Nim ${{ matrix.nim }}
+
+    steps:
+      - uses: actions/checkout@master
+
+      - name: Setup nim
+        uses: jiro4989/setup-nim-action@v1
+        with:
+          nim-version: ${{ matrix.nim }}
+
+      - name: nimble test
+        run: nimble install -y
+
+      - name: nimble test
+        run: nimble list -i
+
+      - name: nimble test
+        run: nimble tests -y
+
+    # TODO: build docs via `nim doc --docSeeSrcUrl:https://github.com/AUTHOR/MYPROJECT/blob/master --project MYFILE.nim`?
