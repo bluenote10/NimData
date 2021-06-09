@@ -132,51 +132,54 @@ proc example02*() =
     .take(5)
     .show()
 
-  # lets look at the 15 most successful home teams
-  df.filter(record => record.homeGoals > record.awayGoals)
-    .map(record => record.projectTo(homeTeam))
-    .valueCounts()
-    .sort(x => x.count, SortOrder.Descending)
-    .map(x => (
-      homeTeam: x.key.homeTeam,
-      count: x.count
-    ))
-    .take(15)
-    .barPlot(x = homeTeam, y = count)
-    .show()
+  # TODO: Renable. Disabled due to https://github.com/brentp/nim-plotly/issues/63
+  when false:
 
-  # a scatter plots of homeGoals / awayGoals
-  df.scatterPlot(x = homeGoals, y = awayGoals)
-    .show()
+    # lets look at the 15 most successful home teams
+    df.filter(record => record.homeGoals > record.awayGoals)
+      .map(record => record.projectTo(homeTeam))
+      .valueCounts()
+      .sort(x => x.count, SortOrder.Descending)
+      .map(x => (
+        homeTeam: x.key.homeTeam,
+        count: x.count
+      ))
+      .take(15)
+      .barPlot(x = homeTeam, y = count)
+      .show()
 
-  # and a heatmap of these
-  df.map(record => record.projectTo(homeGoals, awayGoals))
-    .valueCounts()
-    .sort(x => x.count, SortOrder.Descending)
-    .map(x => (
-      homeGoals: x.key.homeGoals,
-      awayGoals: x.key.awayGoals,
-      count: x.count
-    ))
-    .heatmap(x = homeGoals, y = awayGoals, z = count)
-    .show()
+    # a scatter plots of homeGoals / awayGoals
+    df.scatterPlot(x = homeGoals, y = awayGoals)
+      .show()
 
-  # alternatively a coloread scatter plot of the same, with the
-  # number of occurences as the color of the marker
-  df.map(record => record.projectTo(homeGoals, awayGoals))
-    .valueCounts()
-    .sort(x => x.count, SortOrder.Descending)
-    .map(x => (
-      homeGoals: x.key.homeGoals,
-      awayGoals: x.key.awayGoals,
-      count: x.count
-    ))
-    .scatterColor(x = homeGoals, y = awayGoals, z = count)
-    .markerSize(20)
-    .show()
+    # and a heatmap of these
+    df.map(record => record.projectTo(homeGoals, awayGoals))
+      .valueCounts()
+      .sort(x => x.count, SortOrder.Descending)
+      .map(x => (
+        homeGoals: x.key.homeGoals,
+        awayGoals: x.key.awayGoals,
+        count: x.count
+      ))
+      .heatmap(x = homeGoals, y = awayGoals, z = count)
+      .show()
 
-  # To open data frame in browser:
-  # df.filter(x => x.year == 2000).openInBrowser()
+    # alternatively a coloread scatter plot of the same, with the
+    # number of occurences as the color of the marker
+    df.map(record => record.projectTo(homeGoals, awayGoals))
+      .valueCounts()
+      .sort(x => x.count, SortOrder.Descending)
+      .map(x => (
+        homeGoals: x.key.homeGoals,
+        awayGoals: x.key.awayGoals,
+        count: x.count
+      ))
+      .scatterColor(x = homeGoals, y = awayGoals, z = count)
+      .markerSize(20)
+      .show()
+
+    # To open data frame in browser:
+    # df.filter(x => x.year == 2000).openInBrowser()
 
 when isMainModule:
   # example01()
