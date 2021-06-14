@@ -875,6 +875,24 @@ method iter*(df: FileRowsGZipDataFrame): (iterator(): string) =
       yield res
     stream.close()
 
+# -----------------------------------------------------------------------------
+# FilesRows (gzip files)
+type
+  FilesRowsGZipDataFrame = ref object of DataFrame[string]
+    file_pattern: string
+    hasHeader: bool
+
+method iter*(df: FilesRowsGZipDataFrame): (iterator(): string) =
+  result = iterator(): string =
+    for filename in walkFiles(df.file_pattern):
+      var stream = newGZipStream(filename)
+      var res = TaintedString(newStringOfCap(80))
+      # Discard header
+      if df.hasHeader:
+        discard stream.readLine(res)
+      while stream.readLine(res):
+        yield res
+      stream.close()
 
 # -----------------------------------------------------------------------------
 # Smart from file construction
@@ -916,6 +934,11 @@ proc fromFile*(dfc: DataFrameContext,
         hasHeader: hasHeader
       )
 
+# Read files from pattern - not generic yet
+# TODO: make this more generic like proc fromFiles
+proc fromGZFiles*(dfc: DataFrameContext, file_pattern: string): DataFrame[string] =
+  result = FilesRowsGZipDataFrame(file_pattern: file_pattern, hasHeader: true)
+  
 # -----------------------------------------------------------------------------
 # HDF5
 # -----------------------------------------------------------------------------
